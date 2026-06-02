@@ -6,6 +6,15 @@ const authMiddleware = require('../middleware/auth');
 const router = express.Router();
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+const languageInstructions = {
+  'English': 'Write everything in English.',
+  'Hindi': 'Write the intro_quote and full_persona in Hindi (हिन्दी) using Devanagari script. Keep job_title, company_type and city in English.',
+  'Tamil': 'Write the intro_quote and full_persona in Tamil (தமிழ்) using Tamil script. Keep job_title, company_type and city in English.',
+  'Telugu': 'Write the intro_quote and full_persona in Telugu (తెలుగు) using Telugu script. Keep job_title, company_type and city in English.',
+  'Kannada': 'Write the intro_quote and full_persona in Kannada (ಕನ್ನಡ) using Kannada script. Keep job_title, company_type and city in English.',
+  'Bengali': 'Write the intro_quote and full_persona in Bengali (বাংলা) using Bengali script. Keep job_title, company_type and city in English.',
+}
+
 // POST /api/futures/generate
 router.post('/generate', authMiddleware, async (req, res) => {
   try {
@@ -17,6 +26,9 @@ router.post('/generate', authMiddleware, async (req, res) => {
     const profile = profileResult.rows[0];
     if (!profile) return res.status(404).json({ error: 'Profile not found' });
 
+    const language = profile.preferred_language || 'English'
+    const langInstruction = languageInstructions[language] || languageInstructions['English']
+
     const prompt = `You are a career simulation AI. Based on this student's profile, generate exactly 3 distinct, realistic future career paths for them 5 years from now (year 2029).
 
 Student Profile:
@@ -26,24 +38,30 @@ Student Profile:
 - Top skill: ${profile.top_skill || 'not specified'}
 - Biggest fear: ${profile.biggest_fear || 'not specified'}
 - Mode: ${profile.mode}
+- Preferred language: ${language}
+
+LANGUAGE INSTRUCTION — CRITICAL:
+${langInstruction}
 
 Generate 3 different future paths. Return a JSON array of 3 objects with these exact fields:
 - path_index: 0, 1, or 2
-- job_title: specific job title
-- company_type: type of company
-- city: city they live in
-- salary_min: monthly salary in INR
-- salary_max: monthly salary in INR
-- intro_quote: a powerful 1-sentence quote this future self would say (first person, emotional)
-- full_persona: 200-word description of this future self's life, daily work, wins, regrets
+- job_title: specific job title (always in English)
+- company_type: type of company (always in English)
+- city: city in India they live in (always in English)
+- salary_min: monthly salary in INR (number only)
+- salary_max: monthly salary in INR (number only)
+- year: 2029
+- intro_quote: a powerful 1-sentence quote this future self would say (first person, emotional) — write this in ${language}
+- full_persona: 200-word description of this future self's life, daily work, wins, regrets — write this in ${language}
+- resonance_score: a number between 60-95 representing how much this path resonates with the student's stated dreams
 
-Return ONLY a valid JSON array. No markdown, no explanation.`;
+Return ONLY a valid JSON array. No markdown, no explanation. No extra text.`;
 
     const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.8,
-      max_tokens: 2000
+      max_tokens: 2500
     });
 
     let futures;
@@ -60,11 +78,13 @@ Return ONLY a valid JSON array. No markdown, no explanation.`;
     for (const f of futures) {
       const result = await pool.query(
         `INSERT INTO future_selves
-          (user_id, path_index, job_title, company_type, city, year, salary_min, salary_max, intro_quote, full_persona)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+          (user_id, path_index, job_title, company_type, city, year,
+           salary_min, salary_max, intro_quote, full_persona, resonance_score)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
          RETURNING *`,
         [req.user.id, f.path_index, f.job_title, f.company_type,
-         f.city, 2029, f.salary_min, f.salary_max, f.intro_quote, f.full_persona]
+         f.city, f.year || 2029, f.salary_min, f.salary_max,
+         f.intro_quote, f.full_persona, f.resonance_score || 75]
       );
       saved.push(result.rows[0]);
     }

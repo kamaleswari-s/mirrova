@@ -8,6 +8,7 @@ const futuresRoutes = require('./routes/futures');
 const chatRoutes = require('./routes/chat');
 const blindspotsRoutes = require('./routes/blindspots');
 const sparkplanRoutes = require('./routes/sparkplan');
+const realityCheckRoutes = require('./routes/realitycheck');
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use('/api/futures', futuresRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/blindspots', blindspotsRoutes);
 app.use('/api/sparkplan', sparkplanRoutes);
+app.use('/api/realitycheck', realityCheckRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'Mirrova server running ✓', time: new Date().toISOString() });

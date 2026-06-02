@@ -26,7 +26,10 @@ export function AuthProvider({ children }) {
   const login = (token, userData) => {
     localStorage.setItem('mirrova_token', token)
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
-    setUser(userData)
+    // Always fetch fresh user data from server after login
+    axios.get('/api/auth/me')
+      .then(res => setUser(res.data))
+      .catch(() => setUser(userData))
   }
 
   const logout = () => {

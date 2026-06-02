@@ -8,7 +8,8 @@ const router = express.Router();
 router.post('/save', authMiddleware, async (req, res) => {
   const {
     current_field, dream_direction, top_skill,
-    biggest_fear, recent_rejection, success_vision, resume_text
+    biggest_fear, recent_rejection, success_vision,
+    resume_text, preferred_language
   } = req.body;
 
   try {
@@ -16,11 +17,12 @@ router.post('/save', authMiddleware, async (req, res) => {
       `UPDATE profiles SET
         current_field=$1, dream_direction=$2, top_skill=$3,
         biggest_fear=$4, recent_rejection=$5, success_vision=$6,
-        resume_text=$7, onboarding_complete=true, updated_at=NOW()
-       WHERE user_id=$8`,
+        resume_text=$7, onboarding_complete=true,
+        preferred_language=$8, updated_at=NOW()
+       WHERE user_id=$9`,
       [current_field, dream_direction, top_skill,
        biggest_fear, recent_rejection, success_vision,
-       resume_text, req.user.id]
+       resume_text, preferred_language || 'English', req.user.id]
     );
     res.json({ success: true });
   } catch (err) {
