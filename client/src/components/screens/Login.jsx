@@ -42,9 +42,9 @@ function BrandPanel() {
         <line x1="300" y1="50" x2="300" y2="860" stroke="#0F9E99" strokeWidth="0.3" strokeDasharray="4 10" />
       </svg>
 
-      {/* Logo */}
+      {/* Logo — Moldie only for wordmark */}
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <span style={{ fontFamily: 'Moldie, serif', fontSize: 44, color: '#F2E8D1', letterSpacing: '0.01em' }}>mirrova</span>
+        <span style={{ fontFamily: 'Moldie, serif', fontSize: 36, color: '#F2E8D1' }}>mirrova</span>
       </div>
 
       {/* Center */}
@@ -57,7 +57,7 @@ function BrandPanel() {
           <circle cx="36" cy="10" r="2.5" fill="#FBA002" />
         </svg>
 
-        <h2 style={{ fontFamily: 'Moldie, serif', fontSize: 48, color: '#F2E8D1', lineHeight: 1.2, marginBottom: 16 }}>
+        <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 40, color: '#F2E8D1', lineHeight: 1.2, marginBottom: 16 }}>
           See who you're <span style={{ color: '#0F9E99' }}>becoming.</span>
         </h2>
         <p style={{ fontFamily: 'Inter', fontSize: 15, color: '#B5A98A', lineHeight: 1.75, marginBottom: 40 }}>
@@ -133,7 +133,7 @@ export function Login() {
       <div style={{ flex: 1, background: '#F5F0E8', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 64px' }}>
         <div style={{ width: '100%', maxWidth: 420 }}>
 
-          <h2 style={{ fontFamily: 'Moldie, serif', fontSize: 48, color: '#1A2118', marginBottom: 8, lineHeight: 1.1 }}>
+          <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 40, color: '#1A2118', marginBottom: 8, lineHeight: 1.1 }}>
             Welcome back.
           </h2>
           <p style={{ fontFamily: 'Inter', fontSize: 15, color: '#4A4A4A', marginBottom: 36, fontWeight: 500 }}>
@@ -217,7 +217,7 @@ export function Signup() {
       <div style={{ flex: 1, background: '#F5F0E8', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 64px', overflowY: 'auto' }}>
         <div style={{ width: '100%', maxWidth: 420 }}>
 
-          <h2 style={{ fontFamily: 'Moldie, serif', fontSize: 48, color: '#1A2118', marginBottom: 8, lineHeight: 1.1 }}>
+          <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 40, color: '#1A2118', marginBottom: 8, lineHeight: 1.1 }}>
             Start your journey.
           </h2>
           <p style={{ fontFamily: 'Inter', fontSize: 15, color: '#4A4A4A', marginBottom: 36, fontWeight: 500 }}>
@@ -231,7 +231,6 @@ export function Signup() {
           )}
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-
             <div>
               <label style={labelStyle}>Full name</label>
               <input type="text" value={name} onChange={e => setName(e.target.value)} required
@@ -319,3 +318,4 @@ export function Signup() {
 }
 
 export default Login
+

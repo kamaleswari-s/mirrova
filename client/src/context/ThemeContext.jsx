@@ -7,6 +7,8 @@ const ThemeContext = createContext(null)
 export const THEMES = {
   ivory: {
     name: 'ivory',
+    label: 'Soft Ivory',
+    swatch: '#EFE9E0',
     bg: '#EFE9E0',
     bgCard: '#FFFFFF',
     bgMid: '#E8E2D8',
@@ -15,55 +17,76 @@ export const THEMES = {
     textMuted: '#5A5A5A',
     textSubtle: '#8A8A8A',
     accent: '#0F9E99',
-    accentText: '#EFE9E0',
+    accentText: '#FFFFFF',
     btnPrimary: '#0F9E99',
-    btnPrimaryText: '#EFE9E0',
+    btnPrimaryText: '#FFFFFF',
     btnSecondary: '#1A2118',
     btnSecondaryText: '#EFE9E0',
     border: 'rgba(26,33,24,0.12)',
-    borderStrong: 'rgba(26,33,24,0.25)',
-    swatch: '#EFE9E0',
-    label: 'Soft Ivory',
+    borderStrong: 'rgba(26,33,24,0.22)',
   },
-  dutch: {
-    name: 'dutch',
-    bg: '#C8D98A',
-    bgCard: '#D4E394',
-    bgMid: '#BCCF7E',
-    bgSidebar: '#2A3A10',
-    text: '#1A2400',
-    textMuted: '#3A4A10',
-    textSubtle: '#5A6A30',
-    accent: '#722F37',
-    accentText: '#EEFFBB',
-    btnPrimary: '#722F37',
-    btnPrimaryText: '#EEFFBB',
-    btnSecondary: '#2A3A10',
-    btnSecondaryText: '#EEFFBB',
-    border: 'rgba(26,36,0,0.15)',
-    borderStrong: 'rgba(26,36,0,0.3)',
-    swatch: '#C8D98A',
-    label: 'Forest Dutch',
+
+  midnight: {
+    name: 'midnight',
+    label: 'Midnight',
+    swatch: '#1B2340',
+    bg: '#1B2340',
+    bgCard: '#222B4F',
+    bgMid: '#162038',
+    bgSidebar: '#0F1628',
+    text: '#E8D9C8',
+    textMuted: '#9A8878',
+    textSubtle: '#6A5848',
+    accent: '#B09080',
+    accentText: '#0F1628',
+    btnPrimary: '#B09080',
+    btnPrimaryText: '#0F1628',
+    btnSecondary: '#E8D9C8',
+    btnSecondaryText: '#0F1628',
+    border: 'rgba(232,217,200,0.12)',
+    borderStrong: 'rgba(232,217,200,0.22)',
   },
-  dark: {
-    name: 'dark',
-    bg: '#1A2118',
-    bgCard: '#313B2F',
-    bgMid: '#252E23',
-    bgSidebar: '#111810',
-    text: '#F2E8D1',
-    textMuted: '#B5A98A',
-    textSubtle: '#7A6E58',
-    accent: '#FBA002',
-    accentText: '#1A2118',
-    btnPrimary: '#FBA002',
-    btnPrimaryText: '#1A2118',
-    btnSecondary: '#F2E8D1',
-    btnSecondaryText: '#1A2118',
-    border: 'rgba(242,232,209,0.1)',
-    borderStrong: 'rgba(242,232,209,0.2)',
-    swatch: '#1A2118',
-    label: 'Deep Olive',
+
+  espresso: {
+    name: 'espresso',
+    label: 'Espresso',
+    swatch: '#1A0F0A',
+    bg: '#1A0F0A',
+    bgCard: '#2C1F18',
+    bgMid: '#231610',
+    bgSidebar: '#110A06',
+    text: '#E8EDD8',
+    textMuted: '#B8BA98',
+    textSubtle: '#888A68',
+    accent: '#C8C49A',
+    accentText: '#1A0F0A',
+    btnPrimary: '#C8C49A',
+    btnPrimaryText: '#1A0F0A',
+    btnSecondary: '#3D2B1F',
+    btnSecondaryText: '#E8EDD8',
+    border: 'rgba(232,237,216,0.1)',
+    borderStrong: 'rgba(232,237,216,0.2)',
+  },
+
+  academia: {
+    name: 'academia',
+    label: 'Dark Academia',
+    swatch: '#0F0E0E',
+    bg: '#0F0E0E',
+    bgCard: '#1C1A1A',
+    bgMid: '#161414',
+    bgSidebar: '#080707',
+    text: '#F0F0F0',
+    textMuted: '#A89A8A',
+    textSubtle: '#6A5A4A',
+    accent: '#7A8A3A',
+    accentText: '#F0F0F0',
+    btnPrimary: '#7A8A3A',
+    btnPrimaryText: '#F0F0F0',
+    btnSecondary: '#5A6A2A',
+    btnSecondaryText: '#F0F0F0',
+    border: 'rgba(122,138,58,0.2)',
+    borderStrong: 'rgba(122,138,58,0.35)',
   }
 }
 
@@ -72,7 +95,9 @@ export function ThemeProvider({ children }) {
   const [theme, setThemeState] = useState('ivory')
 
   useEffect(() => {
-    if (user?.theme) setThemeState(user.theme)
+    if (user?.theme && THEMES[user.theme]) {
+      setThemeState(user.theme)
+    }
   }, [user])
 
   const setTheme = async (themeName) => {
@@ -82,8 +107,10 @@ export function ThemeProvider({ children }) {
     } catch {}
   }
 
+  const colors = THEMES[theme] || THEMES.ivory
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, colors: THEMES[theme] }}>
+    <ThemeContext.Provider value={{ theme, setTheme, colors, THEMES }}>
       {children}
     </ThemeContext.Provider>
   )

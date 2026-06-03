@@ -52,7 +52,7 @@ export default function RealityCheck() {
 
       {/* Header */}
       <div style={{ marginBottom: 36 }}>
-        <h1 style={{ fontFamily: 'Inter', fontWeight: 800, fontSize: 32, color: c.text, margin: '0 0 8px', letterSpacing: '-0.02em' }}>
+        <h1 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 32, color: c.text, margin: '0 0 8px', letterSpacing: '-0.02em' }}>
           Reality Check
         </h1>
         <p style={{ fontFamily: 'Inter', fontSize: 15, color: c.textMuted, margin: 0, fontWeight: 500, lineHeight: 1.6 }}>
@@ -179,3 +179,6 @@ export default function RealityCheck() {
     </div>
   )
 }
+
+
+

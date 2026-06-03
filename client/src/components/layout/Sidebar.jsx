@@ -6,7 +6,10 @@ const navItems = [
   { to: '/dashboard', label: 'Home', icon: '🏠' },
   { to: '/simulate', label: 'Simulate', icon: '🔮' },
   { to: '/realitycheck', label: 'Reality Check', icon: '⚡' },
-  { to: '/blindspots', label: 'Blind Spots', icon: '🎯' },
+  { to: '/skills', label: 'Skills', icon: '📊' },
+  { to: '/swot', label: 'Career SWOT', icon: '⊞' },
+  { to: '/resume', label: 'Resume', icon: '📄' },
+  { to: '/rejection', label: 'Rejection Decoder', icon: '🔍' },
   { to: '/pivot', label: 'Pivot', icon: '🔄' },
   { to: '/sparkplan', label: 'Spark Plan', icon: '📅' },
   { to: '/profile', label: 'My Mirror', icon: '🪞' },
@@ -20,72 +23,63 @@ export default function Sidebar() {
   return (
     <aside style={{
       background: colors.bgSidebar,
-      width: 220,
-      minHeight: '100vh',
+      width: 300,
+      height: '100vh',
       display: 'flex',
       flexDirection: 'column',
-      padding: '24px 0',
       flexShrink: 0,
-      transition: 'background 0.3s'
+      position: 'sticky',
+      top: 0,
+      overflow: 'hidden'
     }}>
 
       {/* Logo */}
-      <div style={{ padding: '0 24px 28px' }}>
-        <span className="wordmark" style={{ fontSize: 26, color: '#F2E8D1', letterSpacing: '-0.02em' }}>mirrova</span>
+      <div style={{ padding: '24px 24px 16px' }}>
+        <span style={{ fontFamily: 'Moldie, serif', fontSize: 26, color: '#F2E8D1' }}>mirrova</span>
+        <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#4A4A4A', margin: '3px 0 0', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+          AI Career Intelligence
+        </p>
       </div>
 
       {/* Nav */}
-      <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, padding: '0 12px' }}>
+      <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1, padding: '0 10px', overflowY: 'auto' }}>
         {navItems.map(item => (
           <NavLink key={item.to} to={item.to}
             style={({ isActive }) => ({
               display: 'flex',
               alignItems: 'center',
               gap: 10,
-              padding: '10px 12px',
-              borderRadius: 12,
+              padding: '9px 12px',
+              borderRadius: 10,
               fontFamily: 'Inter, sans-serif',
+              fontWeight: isActive ? 600 : 400,
               fontStyle: 'italic',
-              fontWeight: isActive ? 700 : 500,
               fontSize: 13,
               textDecoration: 'none',
               background: isActive ? `${colors.accent}22` : 'transparent',
-              color: isActive ? colors.accent : '#B5A98A',
+              color: isActive ? colors.accent : '#8A7E6A',
               transition: 'all 0.15s',
-              letterSpacing: '0.01em'
             })}
-            onMouseEnter={e => {
-              if (!e.currentTarget.className.includes('active')) {
-                e.currentTarget.style.background = `${colors.accent}10`
-                e.currentTarget.style.color = '#F2E8D1'
-              }
-            }}
-            onMouseLeave={e => {
-              if (!e.currentTarget.getAttribute('aria-current')) {
-                e.currentTarget.style.background = 'transparent'
-                e.currentTarget.style.color = '#B5A98A'
-              }
-            }}
           >
-            <span style={{ fontSize: 16, flexShrink: 0 }}>{item.icon}</span>
+            <span style={{ fontSize: 15, flexShrink: 0 }}>{item.icon}</span>
             <span>{item.label}</span>
           </NavLink>
         ))}
       </nav>
 
       {/* Theme switcher */}
-      <div style={{ padding: '16px 24px', borderTop: '0.5px solid rgba(255,255,255,0.08)' }}>
-        <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#7A6E58', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px', fontWeight: 600 }}>Theme</p>
+      <div style={{ padding: '12px 20px', borderTop: '0.5px solid rgba(255,255,255,0.06)' }}>
+        <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#4A4A4A', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px', fontWeight: 600 }}>Theme</p>
         <div style={{ display: 'flex', gap: 8 }}>
           {Object.entries(THEMES).map(([key, t]) => (
             <button key={key} onClick={() => setTheme(key)} title={t.label}
               style={{
-                width: 28, height: 28, borderRadius: '50%',
+                width: 24, height: 24, borderRadius: '50%',
                 background: t.swatch,
                 border: theme === key ? `2.5px solid ${colors.accent}` : '1.5px solid rgba(255,255,255,0.15)',
-                cursor: 'pointer', padding: 0, flexShrink: 0,
+                cursor: 'pointer', padding: 0,
                 transition: 'border 0.2s, transform 0.15s',
-                transform: theme === key ? 'scale(1.1)' : 'scale(1)'
+                transform: theme === key ? 'scale(1.15)' : 'scale(1)'
               }}
             />
           ))}
@@ -93,27 +87,30 @@ export default function Sidebar() {
       </div>
 
       {/* User */}
-      <div style={{ padding: '16px 24px', borderTop: '0.5px solid rgba(255,255,255,0.08)' }}>
+      <div style={{ padding: '12px 20px', borderTop: '0.5px solid rgba(255,255,255,0.06)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
             width: 34, height: 34, borderRadius: '50%',
             background: colors.accent,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: 'Fraunces', fontWeight: 900, fontSize: 13,
-            color: colors.accentText, flexShrink: 0,
-            border: `2px solid ${colors.accent}40`
+            fontFamily: 'Inter', fontWeight: 800, fontSize: 13,
+            color: '#fff', flexShrink: 0
           }}>
             {user?.avatar_initials || '?'}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: 13, color: '#F2E8D1', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <p style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: 13, color: '#F2E8D1', margin: '0 0 1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {user?.name}
             </p>
-            <button onClick={() => { logout(); navigate('/') }}
-              style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 600, fontSize: 11, color: '#722F37', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-              Sign out
-            </button>
+            <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#4A4A4A', margin: 0, fontWeight: 500 }}>
+              {user?.preferred_language || 'English'} · {user?.mode}
+            </p>
           </div>
+          <button onClick={() => navigate('/settings')}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 15, padding: 0, opacity: 0.6 }}
+            title="Settings">
+            ⚙️
+          </button>
         </div>
       </div>
     </aside>

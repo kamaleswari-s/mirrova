@@ -9,11 +9,17 @@ import { Signup } from './components/screens/Login'
 import Onboarding from './components/screens/Onboarding'
 import Dashboard from './components/screens/Dashboard'
 import Simulate from './components/screens/Simulate'
-import BlindSpots from './components/screens/BlindSpots'
 import Pivot from './components/screens/Pivot'
 import SparkPlan from './components/screens/SparkPlan'
 import Profile from './components/screens/Profile'
 import RealityCheck from './components/screens/RealityCheck'
+import Settings from './components/screens/Settings'
+import TeacherDashboard from './components/screens/TeacherDashboard'
+import SkillsAssessment from './components/screens/SkillsAssessment'
+import Passport from './components/screens/Passport'
+import RejectionDecoder from './components/screens/RejectionDecoder'
+import CareerSWOT from './components/screens/CareerSWOT'
+import ResumeIntelligence from './components/screens/ResumeIntelligence'
 
 function RequireAuth({ children }) {
   const { user, loading } = useAuth()
@@ -39,19 +45,27 @@ export default function App() {
   return (
     <ThemeProvider>
       <Routes>
+        {/* Public routes */}
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="/passport/:userId" element={<Passport />} />
 
+        {/* Protected routes */}
         <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/simulate" element={<Simulate />} />
-          <Route path="/blindspots" element={<BlindSpots />} />
+          <Route path="/realitycheck" element={<RealityCheck />} />
+          <Route path="/skills" element={<SkillsAssessment />} />
+          <Route path="/swot" element={<CareerSWOT />} />
+          <Route path="/resume" element={<ResumeIntelligence />} />
+          <Route path="/rejection" element={<RejectionDecoder />} />
           <Route path="/pivot" element={<Pivot />} />
           <Route path="/sparkplan" element={<SparkPlan />} />
-          <Route path="/realitycheck" element={<RealityCheck />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/teacher" element={<TeacherDashboard />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" />} />

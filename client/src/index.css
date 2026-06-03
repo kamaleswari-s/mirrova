@@ -21,8 +21,9 @@ body {
 }
 
 .page-heading {
-  font-family: 'Moldie', serif;
-  letter-spacing: 0.01em;
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.01em
 }
 
 .btn {
