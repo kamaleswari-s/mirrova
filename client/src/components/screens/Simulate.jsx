@@ -13,6 +13,8 @@ function TypingIndicator() {
   )
 }
 
+const API_BASE = import.meta.env.DEV ? '' : 'https://mirrova-server.onrender.com'
+
 export default function Simulate() {
   const { colors } = useTheme()
   const [futures, setFutures] = useState([])
@@ -68,7 +70,7 @@ export default function Simulate() {
     setMessages(prev => [...prev, { role: 'assistant', content: '', streaming: true }])
 
     try {
-      const response = await fetch('/api/chat/message', {
+      const response = await fetch(`${API_BASE}/api/chat/message`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -243,5 +245,3 @@ export default function Simulate() {
     </div>
   )
 }
-
-
