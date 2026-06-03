@@ -14,40 +14,43 @@ export default function ResumeIntelligence() {
   const [fileName, setFileName] = useState('')
   const fileRef = useRef(null)
 
-  const extractPdfText = async (file) => {
-    const arrayBuffer = await file.arrayBuffer()
-    const pdfjsLib = await import('pdfjs-dist/build/pdf')
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
-    let fullText = ''
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i)
-      const content = await page.getTextContent()
-      fullText += content.items.map(item => item.str).join(' ') + '\n'
-    }
-    return fullText
-  }
-
   const handleFileUpload = async (e) => {
     const file = e.target.files[0]
     if (!file) return
     setUploading(true)
     setFileName(file.name)
     try {
-      if (file.name.endsWith('.docx')) {
+      const formData = new FormData()
+      formData.append('resume', file)
+      const r = await axios.post('/api/resume/extract', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+
+      if (r.data.type === 'docx') {
         const mammoth = await import('mammoth')
-        const arrayBuffer = await file.arrayBuffer()
-        const result = await mammoth.extractRawText({ arrayBuffer })
+        const binaryStr = atob(r.data.buffer)
+        const bytes = new Uint8Array(binaryStr.length)
+        for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i)
+        const result = await mammoth.extractRawText({ arrayBuffer: bytes.buffer })
         setResumeText(result.value)
-      } else if (file.name.endsWith('.pdf')) {
-        const text = await extractPdfText(file)
-        setResumeText(text)
       } else {
-        const text = await file.text()
-        setResumeText(text)
+        const pdfjsLib = await import('pdfjs-dist')
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
+        const binaryStr = atob(r.data.buffer)
+        const bytes = new Uint8Array(binaryStr.length)
+        for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i)
+        const pdf = await pdfjsLib.getDocument({ data: bytes }).promise
+        let fullText = ''
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i)
+          const content = await page.getTextContent()
+          fullText += content.items.map(item => item.str).join(' ') + '\n'
+        }
+        setResumeText(fullText)
       }
     } catch (err) {
-      alert('Error reading file. Try pasting the text instead.')
+      console.error(err)
+      alert('Error reading file. Please paste your resume text instead.')
       setFileName('')
     } finally { setUploading(false) }
   }
@@ -97,21 +100,17 @@ export default function ResumeIntelligence() {
   return (
     <div style={{ padding: '40px 48px', color: c.text }}>
 
-      {/* Header */}
       <div style={{ marginBottom: 32 }}>
         <h1 className="page-heading" style={{ fontSize: 32, color: c.text, marginBottom: 8 }}>
           Resume Intelligence
         </h1>
         <p style={{ fontFamily: 'Inter', fontSize: 15, color: c.textMuted, margin: 0, fontWeight: 500, lineHeight: 1.6 }}>
-          Upload your resume. Get a brutally honest analysis, ATS score, rewritten bullets, and exactly what to fix.
+          Upload or paste your resume. Get a brutally honest analysis, ATS score, rewritten bullets, and exactly what to fix.
         </p>
       </div>
 
       {!result ? (
-        /* INPUT STATE */
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 20 }}>
-
-          {/* Left */}
           <div style={card()}>
             <p style={lbl()}>Upload or paste your resume</p>
 
@@ -134,7 +133,7 @@ export default function ResumeIntelligence() {
                 <>
                   <span style={{ fontSize: 36, display: 'block', marginBottom: 8 }}>✅</span>
                   <p style={{ fontFamily: 'Inter', fontSize: 14, color: c.accent, margin: '0 0 4px', fontWeight: 700 }}>{fileName}</p>
-                  <p style={{ fontFamily: 'Inter', fontSize: 12, color: c.textMuted, margin: '0 0 8px' }}>File loaded successfully — review text below</p>
+                  <p style={{ fontFamily: 'Inter', fontSize: 12, color: c.textMuted, margin: '0 0 8px' }}>File loaded — review text below or click to change</p>
                   <span style={{ fontFamily: 'Inter', fontSize: 11, color: c.textMuted, fontWeight: 600, background: c.bgMid, padding: '4px 12px', borderRadius: 99, border: `1px solid ${c.border}` }}>Click to change file</span>
                 </>
               ) : (
@@ -147,7 +146,6 @@ export default function ResumeIntelligence() {
               )}
             </div>
 
-            {/* Divider */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
               <div style={{ flex: 1, height: 1, background: c.border }} />
               <span style={{ fontFamily: 'Inter', fontSize: 11, color: c.textMuted, fontWeight: 600, letterSpacing: '0.06em' }}>OR PASTE MANUALLY</span>
@@ -175,7 +173,6 @@ export default function ResumeIntelligence() {
             </div>
           </div>
 
-          {/* Right — what you get */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ background: '#1A2118', borderRadius: 16, padding: '24px', border: '1px solid rgba(255,255,255,0.06)' }}>
               <p style={lbl('#0F9E99')}>What you'll get</p>
@@ -200,10 +197,10 @@ export default function ResumeIntelligence() {
             <div style={card({ borderLeft: `4px solid #FBA002` })}>
               <p style={lbl('#FBA002')}>Tips for best results</p>
               {[
-                'Upload the full resume — not just highlights',
                 'DOCX gives the best text extraction',
-                'Include target job title if possible',
+                'Include your full resume not just highlights',
                 'More detail = more accurate analysis',
+                'Include target job title if possible',
               ].map((tip, i) => (
                 <div key={i} style={{ display: 'flex', gap: 8, marginBottom: i < 3 ? 8 : 0 }}>
                   <span style={{ color: '#FBA002', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
@@ -214,9 +211,7 @@ export default function ResumeIntelligence() {
           </div>
         </div>
       ) : (
-        /* RESULTS STATE */
         <div>
-          {/* Score row */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
             {[
               { label: 'Overall Score', value: result.overall_score, color: scoreColor(result.overall_score) },
@@ -233,7 +228,6 @@ export default function ResumeIntelligence() {
             ))}
           </div>
 
-          {/* Recruiter impression */}
           <div style={{ background: '#1A2118', borderRadius: 16, padding: '24px', marginBottom: 20, border: '1px solid rgba(255,255,255,0.06)' }}>
             <p style={lbl('#FBA002')}>👁️ 6-second recruiter impression</p>
             <p style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 600, fontSize: 16, color: '#F2E8D1', margin: '0 0 16px', lineHeight: 1.6 }}>
@@ -245,7 +239,6 @@ export default function ResumeIntelligence() {
             </button>
           </div>
 
-          {/* Tabs */}
           <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: c.bgCard, borderRadius: 12, padding: 4, border: `1px solid ${c.border}`, width: 'fit-content' }}>
             {tabs.map(tab => (
               <button key={tab.key} onClick={() => setActiveTab(tab.key)}
@@ -255,7 +248,6 @@ export default function ResumeIntelligence() {
             ))}
           </div>
 
-          {/* TAB: OVERVIEW */}
           {activeTab === 'overview' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -273,7 +265,6 @@ export default function ResumeIntelligence() {
                     </div>
                   ))}
                 </div>
-
                 <div style={card()}>
                   <p style={lbl('#722F37')}>Missing keywords — add these to pass ATS</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -285,7 +276,6 @@ export default function ResumeIntelligence() {
                   </div>
                 </div>
               </div>
-
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div style={{ background: '#1A0A0A', borderRadius: 16, padding: '20px', border: '1px solid rgba(114,47,55,0.3)' }}>
                   <p style={lbl('#722F37')}>💥 Brutal truth</p>
@@ -293,7 +283,6 @@ export default function ResumeIntelligence() {
                     "{result.brutal_truth}"
                   </p>
                 </div>
-
                 <div style={card()}>
                   <p style={lbl()}>Section scores</p>
                   {Object.entries(result.sections || {}).map(([key, val]) => (
@@ -308,7 +297,6 @@ export default function ResumeIntelligence() {
                     </div>
                   ))}
                 </div>
-
                 <div style={card()}>
                   <p style={lbl()}>Next steps</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -330,7 +318,6 @@ export default function ResumeIntelligence() {
             </div>
           )}
 
-          {/* TAB: SECTIONS */}
           {activeTab === 'sections' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {Object.entries(result.sections || {}).map(([key, val]) => (
@@ -367,7 +354,6 @@ export default function ResumeIntelligence() {
             </div>
           )}
 
-          {/* TAB: REWRITES */}
           {activeTab === 'rewrites' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div style={card({ background: `${c.accent}08`, border: `1px solid ${c.accent}25` })}>
@@ -395,12 +381,11 @@ export default function ResumeIntelligence() {
             </div>
           )}
 
-          {/* TAB: SKILLS TO ADD */}
           {activeTab === 'skills' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={card({ background: '#1A2118', border: '1px solid rgba(255,255,255,0.06)' })}>
                 <p style={{ fontFamily: 'Inter', fontSize: 14, color: '#F2E8D1', margin: 0, lineHeight: 1.6 }}>
-                  These are skills missing from your resume that employers in your target field actively look for. Ranked by impact.
+                  These are skills missing from your resume that employers in your target field actively look for.
                 </p>
               </div>
               {result.skills_to_add?.map((skill, i) => (
@@ -419,7 +404,6 @@ export default function ResumeIntelligence() {
             </div>
           )}
 
-          {/* TAB: POLISH */}
           {activeTab === 'polish' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={card({ background: '#1A2118', border: '1px solid rgba(255,255,255,0.06)', marginBottom: 4 })}>
