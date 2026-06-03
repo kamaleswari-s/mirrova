@@ -4,6 +4,12 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import { AuthProvider } from './context/AuthContext'
 import './index.css'
+import axios from 'axios'
+
+// Set base URL for production
+if (import.meta.env.PROD) {
+  axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'https://mirrova-server.onrender.com'
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter>
@@ -13,7 +19,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   </BrowserRouter>
 )
 
-// Register service worker for PWA/offline support
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
