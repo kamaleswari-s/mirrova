@@ -20,6 +20,7 @@ import Passport from './components/screens/Passport'
 import RejectionDecoder from './components/screens/RejectionDecoder'
 import CareerSWOT from './components/screens/CareerSWOT'
 import ResumeIntelligence from './components/screens/ResumeIntelligence'
+import Discover from './components/screens/Discover'
 
 function RequireAuth({ children }) {
   const { user, loading } = useAuth()
@@ -55,9 +56,10 @@ export default function App() {
         {/* Protected routes */}
         <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/discover" element={<Discover />} />
           <Route path="/simulate" element={<Simulate />} />
-          <Route path="/realitycheck" element={<RealityCheck />} />
           <Route path="/skills" element={<SkillsAssessment />} />
+          <Route path="/realitycheck" element={<RealityCheck />} />
           <Route path="/swot" element={<CareerSWOT />} />
           <Route path="/resume" element={<ResumeIntelligence />} />
           <Route path="/rejection" element={<RejectionDecoder />} />
