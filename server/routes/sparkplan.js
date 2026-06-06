@@ -11,6 +11,8 @@ router.post('/generate', authMiddleware, async (req, res) => {
   try {
     const dataResult = await pool.query(
       `SELECT u.name, p.current_field, p.dream_direction, p.top_skill, p.biggest_fear,
+              p.hours_per_day, p.biggest_blocker, p.city, p.education_level,
+              p.skills_assessment, p.reality_check,
               fs.job_title, fs.company_type, fs.id as future_self_id
        FROM users u
        JOIN profiles p ON p.user_id=u.id
@@ -20,36 +22,83 @@ router.post('/generate', authMiddleware, async (req, res) => {
     );
     const data = dataResult.rows[0];
 
-    const prompt = `Create a 90-day action spark plan for a student transitioning from ${data.current_field} toward becoming a ${data.job_title || data.dream_direction}.
+    // Extract skills gap data
+    let gapData = null
+    let criticalGaps = []
+    let resumeScore = null
 
-Their strongest skill is ${data.top_skill}.
+    if (data.skills_assessment) {
+      try {
+        const sa = typeof data.skills_assessment === 'string'
+          ? JSON.parse(data.skills_assessment)
+          : data.skills_assessment
+        gapData = sa.gap_analysis || null
+        criticalGaps = gapData?.critical_gaps?.map(g => g.skill) || []
+      } catch (e) {}
+    }
+
+    if (data.reality_check) {
+      try {
+        const rc = typeof data.reality_check === 'string'
+          ? JSON.parse(data.reality_check)
+          : data.reality_check
+        resumeScore = rc.overall_score || null
+      } catch (e) {}
+    }
+
+    const hoursPerDay = data.hours_per_day || '1-2 hours'
+    const targetRole = data.job_title || data.dream_direction || 'target role'
+    const language = 'English'
+
+    const prompt = `Create a highly personalized 90-day Spark Plan for this student.
+
+Student Profile:
+- Name: ${data.name}
+- Current field: ${data.current_field || 'not specified'}
+- Target role: ${targetRole}
+- Top skill: ${data.top_skill || 'not specified'}
+- Biggest fear: ${data.biggest_fear || 'not specified'}
+- Biggest blocker: ${data.biggest_blocker || 'not specified'}
+- City: ${data.city || 'India'}
+- Education: ${data.education_level || 'not specified'}
+- Hours available per day: ${hoursPerDay}
+- Critical skill gaps identified: ${criticalGaps.length > 0 ? criticalGaps.join(', ') : 'not assessed yet'}
+- Reality check score: ${resumeScore ? resumeScore + '/100' : 'not assessed yet'}
+
+IMPORTANT PERSONALIZATION RULES:
+- Tasks must be realistic for ${hoursPerDay} per day
+- If critical gaps exist (${criticalGaps.join(', ')}), the first month MUST address them
+- Tasks should reference their specific target role: ${targetRole}
+- Month themes must reflect their actual journey
+- Each task must feel like it was written specifically for THIS student
 
 Return ONLY valid JSON:
 {
-  "month1_theme": "Build Foundation",
-  "month2_theme": "Create Proof",
-  "month3_theme": "Put Yourself Out There",
+  "month1_theme": "<theme based on their biggest gap in ${language}>",
+  "month2_theme": "<theme for building proof in ${language}>",
+  "month3_theme": "<theme for getting visible in ${language}>",
   "tasks": [
     {
       "week": 1,
       "month": 1,
-      "title": "specific task title",
-      "description": "exact action to take",
-      "duration": "estimated time",
+      "title": "<specific task title mentioning their gap/role>",
+      "description": "<exact action to take, personalized to their situation>",
+      "duration": "<realistic time for ${hoursPerDay} per day>",
+      "why": "<one line: why this matters for becoming ${targetRole}>",
       "completed": false
     }
   ]
 }
 
-Generate 9 weeks total (weeks 1-9), 3 tasks each week = 27 tasks total.
-Make them genuinely useful and progressive.
-Return ONLY the JSON. No markdown.`;
+Generate exactly 27 tasks — 3 tasks per week, 9 weeks total.
+Make each task genuinely useful, specific, and progressive.
+Return ONLY the JSON. No markdown.`
 
     const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.7,
-      max_tokens: 3000
+      temperature: 0.8,
+      max_tokens: 3500
     });
 
     let plan;
@@ -59,6 +108,9 @@ Return ONLY the JSON. No markdown.`;
     } catch (e) {
       return res.status(500).json({ error: 'Parse error' });
     }
+
+    // Delete old plan and insert new one
+    await pool.query('DELETE FROM spark_plans WHERE user_id=$1', [req.user.id]);
 
     await pool.query(
       `INSERT INTO spark_plans (user_id, future_self_id, month1_theme, month2_theme, month3_theme, tasks)
