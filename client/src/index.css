@@ -23,7 +23,7 @@ body {
 .page-heading {
   font-family: 'Syne', sans-serif;
   font-weight: 800;
-  letter-spacing: -0.01em
+  letter-spacing: -0.01em;
 }
 
 .btn {
@@ -80,3 +80,41 @@ body {
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }
+
+/* ── MOBILE RESPONSIVE ── */
+@media (max-width: 768px) {
+
+  /* Hide sidebar on mobile */
+  aside {
+    display: none !important;
+  }
+
+  /* Show mobile nav instead */
+  .mobile-nav {
+    display: flex !important;
+  }
+
+  /* Full width content */
+  .app-main {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  /* Reduce padding on all pages */
+  .mobile-padding {
+    padding: 20px 16px !important;
+  }
+
+  /* Stack grids on mobile */
+  .grid-2col,
+  .grid-3col,
+  .grid-4col {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-nav {
+    display: none !important;
+  }
+}
