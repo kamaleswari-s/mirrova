@@ -83,33 +83,17 @@ body {
 
 /* ── MOBILE RESPONSIVE ── */
 @media (max-width: 768px) {
-
-  /* Hide sidebar on mobile */
   aside {
     display: none !important;
   }
 
-  /* Show mobile nav instead */
   .mobile-nav {
     display: flex !important;
   }
 
-  /* Full width content */
   .app-main {
     width: 100% !important;
     min-width: 0 !important;
-  }
-
-  /* Reduce padding on all pages */
-  .mobile-padding {
-    padding: 20px 16px !important;
-  }
-
-  /* Stack grids on mobile */
-  .grid-2col,
-  .grid-3col,
-  .grid-4col {
-    grid-template-columns: 1fr !important;
   }
 }
 
