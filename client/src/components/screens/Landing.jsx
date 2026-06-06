@@ -17,7 +17,6 @@ export default function Landing() {
 
       {/* ── HERO ── */}
       <div style={{ minHeight: '100vh', background: '#0E1512', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-
         <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.07, pointerEvents: 'none' }} viewBox="0 0 1440 900" fill="none" preserveAspectRatio="xMidYMid slice">
           <circle cx="720" cy="450" r="380" stroke="#0F9E99" strokeWidth="0.5" />
           <circle cx="720" cy="450" r="280" stroke="#0F9E99" strokeWidth="0.5" />
@@ -28,8 +27,6 @@ export default function Landing() {
           <line x1="100" y1="450" x2="1340" y2="450" stroke="#0F9E99" strokeWidth="0.4" strokeDasharray="4 8" />
           <circle cx="720" cy="70" r="4" fill="#FBA002" opacity="0.6" />
           <circle cx="720" cy="450" r="6" fill="#0F9E99" opacity="0.4" />
-          <path d="M 200 200 Q 400 100 600 200 Q 800 300 1000 200 Q 1200 100 1400 200" stroke="#0F9E99" strokeWidth="0.3" fill="none" opacity="0.5" />
-          <path d="M 200 700 Q 400 800 600 700 Q 800 600 1000 700 Q 1200 800 1400 700" stroke="#615091" strokeWidth="0.3" fill="none" opacity="0.5" />
         </svg>
 
         {/* NAV */}
@@ -44,7 +41,6 @@ export default function Landing() {
             </svg>
             <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 22, color: '#F2E8D1' }}>mirrova</span>
           </div>
-
           <div style={{ display: 'flex', gap: 32, position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
             {[['About', aboutRef], ['Why Mirrova', whyRef], ['How it works', howRef]].map(([label, ref]) => (
               <button key={label} onClick={() => ref.current?.scrollIntoView({ behavior: 'smooth' })}
@@ -54,7 +50,6 @@ export default function Landing() {
               >{label}</button>
             ))}
           </div>
-
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flex: 1, justifyContent: 'flex-end' }}>
             <button onClick={() => navigate('/login')}
               style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: 12, color: '#F2E8D1', background: 'none', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 99, padding: '7px 18px', cursor: 'pointer' }}>
@@ -69,7 +64,6 @@ export default function Landing() {
 
         {/* Hero content */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '40px 48px', position: 'relative', zIndex: 10 }}>
-
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(15,158,153,0.1)', border: '1px solid rgba(15,158,153,0.25)', borderRadius: 99, padding: '5px 14px', marginBottom: 28 }}>
             <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#0F9E99' }} />
             <span style={{ fontFamily: 'Inter', fontSize: 10, color: '#0F9E99', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>AI Career Intelligence · 6 Indian Languages</span>
@@ -106,7 +100,7 @@ export default function Landing() {
               style={{ fontFamily: 'Inter, sans-serif', fontStyle: 'italic', fontWeight: 700, fontSize: 14, background: '#0F9E99', color: '#EFE9E0', border: 'none', borderRadius: 99, padding: '12px 28px', cursor: 'pointer' }}>
               See my future →
             </button>
-            <button onClick={() => handleMode('stuck')}
+            <button onClick={() => handleMode('rejected')}
               style={{ fontFamily: 'Inter, sans-serif', fontStyle: 'italic', fontWeight: 700, fontSize: 14, background: 'transparent', border: '1.5px solid rgba(255,255,255,0.15)', borderRadius: 99, padding: '12px 28px', cursor: 'pointer', color: '#F2E8D1' }}>
               I keep getting rejected
             </button>
@@ -170,13 +164,14 @@ export default function Landing() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
+          {/* Top 3 featured tools */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, marginBottom: 2 }}>
             {[
               { num: '01', title: 'Future Self Simulator', desc: "Chat with 3 AI versions of yourself, 5 years from now. Each has lived a different path. Ask them anything — in Tamil, Hindi, Telugu, Kannada, Bengali or English.", accent: '#0F9E99' },
               { num: '02', title: 'Reality Check + Skills Gap', desc: "Get a brutally honest career readiness score based on your skills, city, college tier and target role. Know exactly where you stand — not where you hope to be.", accent: '#FBA002', dark: true },
               { num: '03', title: 'Resume Intelligence', desc: "Upload your PDF or DOCX. Get an ATS score, 6-second recruiter impression, weak bullets rewritten with impact, and the exact skills you need to add.", accent: '#615091' },
             ].map((f, i) => (
-              <div key={f.num} style={{ background: f.dark ? '#313B2F' : '#252E23', padding: '32px', border: '0.5px solid rgba(255,255,255,0.06)', borderRadius: i === 0 ? '12px 0 0 12px' : i === 2 ? '0 12px 12px 0' : 0 }}>
+              <div key={f.num} style={{ background: f.dark ? '#313B2F' : '#252E23', padding: '32px', border: '0.5px solid rgba(255,255,255,0.06)', borderRadius: i === 0 ? '12px 0 0 0' : i === 2 ? '0 12px 0 0' : 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
                   <p style={{ fontFamily: 'Inter', fontSize: 11, color: '#4A4A4A', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0 }}>{f.num}</p>
                   <div style={{ width: 32, height: 32, borderRadius: 8, background: `${f.accent}18`, border: `1px solid ${f.accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -184,27 +179,43 @@ export default function Landing() {
                   </div>
                 </div>
                 <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 18, color: '#F2E8D1', margin: '0 0 12px', lineHeight: 1.2 }}>{f.title}</p>
-                <p style={{ fontFamily: 'Inter', fontSize: 13, color: '#7A6E58', margin: 0, lineHeight: 1.75 }}>{f.desc}</p>
+                <p style={{ fontFamily: 'Inter', fontSize: 13, color: '#B5A98A', margin: 0, lineHeight: 1.75 }}>{f.desc}</p>
               </div>
             ))}
           </div>
 
-          {/* More tools */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2, marginTop: 2 }}>
+          {/* Row 2 — 4 tools */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2, marginBottom: 2 }}>
             {[
-              { title: 'Career SWOT', desc: 'Deep analysis of strengths, weaknesses, opportunities and threats with a full actionable report.', accent: '#0F9E99' },
+              { title: 'Career SWOT', desc: 'Strengths, weaknesses, opportunities and threats — with a full actionable report.', accent: '#0F9E99' },
               { title: 'Rejection Decoder', desc: 'Find the REAL reason you were rejected — not the polite HR version.', accent: '#722F37' },
-              { title: '90-Day Spark Plan', desc: 'Personalized week-by-week action plan based on your gaps, goals and time available.', accent: '#FBA002' },
+              { title: '90-Day Spark Plan', desc: 'Week-by-week action plan built around your specific gaps and time available.', accent: '#FBA002' },
               { title: 'Employability Passport', desc: 'A shareable career profile to send employers instead of a plain resume.', accent: '#615091' },
             ].map((f, i) => (
-              <div key={f.title} style={{ background: '#252E23', padding: '24px', border: '0.5px solid rgba(255,255,255,0.06)', borderRadius: i === 0 ? '12px 0 0 12px' : i === 3 ? '0 12px 12px 0' : 0 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: f.accent, marginBottom: 14 }} />
+              <div key={f.title} style={{ background: '#1E2820', padding: '22px', border: '0.5px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: f.accent, marginBottom: 12 }} />
                 <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14, color: '#F2E8D1', margin: '0 0 8px', lineHeight: 1.3 }}>{f.title}</p>
-                <p style={{ fontFamily: 'Inter', fontSize: 12, color: '#7A6E58', margin: 0, lineHeight: 1.6 }}>{f.desc}</p>
+                <p style={{ fontFamily: 'Inter', fontSize: 12, color: '#B5A98A', margin: 0, lineHeight: 1.6 }}>{f.desc}</p>
               </div>
             ))}
           </div>
 
+          {/* Row 3 — 3 tools */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, marginBottom: 2 }}>
+            {[
+              { title: 'Skills Assessment', desc: 'Rate yourself on key skills for your target role. See your gaps and what to learn first.', accent: '#0F9E99' },
+              { title: 'Pivot Bridge', desc: 'Already in the wrong course? Map your exact step-by-step path from where you are to where you want to be.', accent: '#D4A842' },
+              { title: 'Direction Finder', desc: "Don't know what you want? Answer 3 questions and Mirrova suggests 3 career paths that genuinely fit you.", accent: '#C3B9E8' },
+            ].map((f, i) => (
+              <div key={f.title} style={{ background: '#252E23', padding: '22px', border: '0.5px solid rgba(255,255,255,0.06)', borderRadius: i === 0 ? '0 0 0 12px' : i === 2 ? '0 0 12px 0' : 0 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: f.accent, marginBottom: 12 }} />
+                <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14, color: '#F2E8D1', margin: '0 0 8px', lineHeight: 1.3 }}>{f.title}</p>
+                <p style={{ fontFamily: 'Inter', fontSize: 12, color: '#B5A98A', margin: 0, lineHeight: 1.6 }}>{f.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0, marginTop: 2, borderTop: '0.5px solid rgba(255,255,255,0.06)' }}>
             {[
               { val: '3', label: 'Ways to tell us your story — questions, voice or free text' },
@@ -213,7 +224,7 @@ export default function Landing() {
             ].map((s, i) => (
               <div key={s.val} style={{ padding: '28px 32px', borderRight: i < 2 ? '0.5px solid rgba(255,255,255,0.06)' : 'none', display: 'flex', gap: 16, alignItems: 'center' }}>
                 <span style={{ fontFamily: 'Fraunces, serif', fontWeight: 900, fontSize: 44, color: '#0F9E99', lineHeight: 1, flexShrink: 0 }}>{s.val}</span>
-                <span style={{ fontFamily: 'Inter', fontSize: 13, color: '#4A4A4A', lineHeight: 1.6 }}>{s.label}</span>
+                <span style={{ fontFamily: 'Inter', fontSize: 13, color: '#7A6E58', lineHeight: 1.6 }}>{s.label}</span>
               </div>
             ))}
           </div>
@@ -233,34 +244,10 @@ export default function Landing() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {[
-              {
-                num: '01',
-                title: 'Tell Mirrova your story — your way',
-                body: 'Answer 11 deep questions, speak in your mother tongue, or just type everything freely like you\'re talking to someone you trust. Mirrova reads your story, understands you, and confirms what it heard before anything starts.',
-                color: '#0F9E99',
-                bg: '#fff'
-              },
-              {
-                num: '02',
-                title: 'Meet your future selves',
-                body: 'AI generates 3 versions of you, 5 years from now. Each one has lived a different path. You chat with them in Tamil, Hindi or any of 6 languages. Ask the hard questions. See which one lights you up.',
-                color: '#615091',
-                bg: '#F5F0E8'
-              },
-              {
-                num: '03',
-                title: 'Get your complete career intelligence',
-                body: 'Reality Check score. Skills gap analysis. Career SWOT. Resume ATS score. Rejection decoded. All of it personalized to your city, college tier, target role and hours available — not a generic template.',
-                color: '#722F37',
-                bg: '#fff'
-              },
-              {
-                num: '04',
-                title: 'Leave with a real plan',
-                body: 'A 90-day Spark Plan built around your specific gaps — with weekly tasks, timelines, and reasons why. An Employability Passport to share with employers. And the clarity to take the next step today.',
-                color: '#FBA002',
-                bg: '#F5F0E8'
-              },
+              { num: '01', title: 'Tell Mirrova your story — your way', body: "Answer 11 deep questions, speak in your mother tongue, or just type everything freely like you're talking to someone you trust. Mirrova reads your story, understands you, and confirms what it heard before anything starts.", color: '#0F9E99', bg: '#fff' },
+              { num: '02', title: 'Meet your future selves', body: 'AI generates 3 versions of you, 5 years from now. Each one has lived a different path. You chat with them in Tamil, Hindi or any of 6 languages. Ask the hard questions. See which one lights you up.', color: '#615091', bg: '#F5F0E8' },
+              { num: '03', title: 'Get your complete career intelligence', body: 'Reality Check score. Skills gap analysis. Career SWOT. Resume ATS score. Rejection decoded. All of it personalized to your city, college tier, target role and hours available — not a generic template.', color: '#722F37', bg: '#fff' },
+              { num: '04', title: 'Leave with a real plan', body: 'A 90-day Spark Plan built around your specific gaps — with weekly tasks, timelines, and reasons why. An Employability Passport to share with employers. And the clarity to take the next step today.', color: '#FBA002', bg: '#F5F0E8' },
             ].map((s, i) => (
               <div key={s.num} style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: 0, background: s.bg, border: '0.5px solid rgba(26,33,24,0.08)', borderRadius: i === 0 ? '16px 16px 0 0' : i === 3 ? '0 0 16px 16px' : 0, overflow: 'hidden' }}>
                 <div style={{ padding: '40px 32px', borderRight: '0.5px solid rgba(26,33,24,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
