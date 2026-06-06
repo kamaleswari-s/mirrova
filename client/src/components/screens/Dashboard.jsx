@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
+import useIsMobile from '../../hooks/useIsMobile'
 
 export default function Dashboard() {
   const { user } = useAuth()
   const { colors: c } = useTheme()
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
   const [futures, setFutures] = useState([])
   const [plan, setPlan] = useState(null)
   const [realityCheck, setRealityCheck] = useState(null)
@@ -50,7 +52,7 @@ export default function Dashboard() {
   const card = (extra = {}) => ({
     background: c.bgCard,
     borderRadius: 16,
-    padding: '20px 24px',
+    padding: isMobile ? '16px' : '20px 24px',
     border: `1px solid ${c.border}`,
     ...extra
   })
@@ -71,83 +73,56 @@ export default function Dashboard() {
     { label: 'Spark Plan', icon: '📅', path: '/sparkplan', color: '#D4A842' },
   ]
 
-  // Journey steps in correct order
   const journeySteps = [
-    {
-      done: !!chosenSelf,
-      label: 'Meet your future selves',
-      sub: 'Step 1 — Find your north star',
-      path: '/simulate',
-      cta: 'Go →'
-    },
-    {
-      done: hasSkills,
-      label: 'Assess your skills',
-      sub: 'Step 2 — Know what you actually have',
-      path: '/skills',
-      cta: 'Go →'
-    },
-    {
-      done: !!realityCheck,
-      label: 'Get your Reality Check',
-      sub: 'Step 3 — Find out honestly where you stand',
-      path: '/realitycheck',
-      cta: 'Go →',
-      locked: !hasSkills,
-      lockMsg: 'Complete Skills first'
-    },
-    {
-      done: !!plan,
-      label: 'Build your Spark Plan',
-      sub: 'Step 4 — Get your 90-day action plan',
-      path: '/sparkplan',
-      cta: 'Go →'
-    },
+    { done: !!chosenSelf, label: 'Meet your future selves', sub: 'Step 1 — Find your north star', path: '/simulate', cta: 'Go →' },
+    { done: hasSkills, label: 'Assess your skills', sub: 'Step 2 — Know what you actually have', path: '/skills', cta: 'Go →' },
+    { done: !!realityCheck, label: 'Get your Reality Check', sub: 'Step 3 — Find out honestly where you stand', path: '/realitycheck', cta: 'Go →', locked: !hasSkills, lockMsg: 'Complete Skills first' },
+    { done: !!plan, label: 'Build your Spark Plan', sub: 'Step 4 — Get your 90-day action plan', path: '/sparkplan', cta: 'Go →' },
   ]
 
   const allDone = journeySteps.every(s => s.done)
 
   return (
-    <div style={{ padding: '40px 48px', color: c.text }}>
+    <div style={{ padding: isMobile ? '20px 16px' : '40px 48px', color: c.text }}>
 
       {/* GREETING */}
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 36, color: c.text, margin: '0 0 6px', letterSpacing: '-0.02em' }}>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: isMobile ? 26 : 36, color: c.text, margin: '0 0 6px', letterSpacing: '-0.02em' }}>
           {greeting}, {user?.name?.split(' ')[0]}.
         </h1>
-        <p style={{ fontFamily: 'Inter', fontStyle: 'italic', fontSize: 15, color: c.accent, margin: 0, fontWeight: 500 }}>
+        <p style={{ fontFamily: 'Inter', fontStyle: 'italic', fontSize: isMobile ? 13 : 15, color: c.accent, margin: 0, fontWeight: 500 }}>
           {chosenSelf ? `You're on your way to becoming a ${chosenSelf.job_title}.` : 'Your future self is waiting to meet you.'}
         </p>
       </div>
 
       {/* MAIN GRID */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 320px', gap: 16 }}>
 
         {/* LEFT */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
           {/* JOURNEY CHECKLIST */}
           {!allDone && (
-            <div style={{ background: 'linear-gradient(135deg, #1A2118, #0E1512)', borderRadius: 16, padding: '20px 24px', border: '1px solid rgba(15,158,153,0.2)' }}>
+            <div style={{ background: 'linear-gradient(135deg, #1A2118, #0E1512)', borderRadius: 16, padding: isMobile ? '16px' : '20px 24px', border: '1px solid rgba(15,158,153,0.2)' }}>
               <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#0F9E99', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 12px' }}>
                 🚀 Your Mirrova journey — complete in order
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {journeySteps.map((step, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, background: step.done ? 'rgba(15,158,153,0.08)' : step.locked ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.03)', border: `1px solid ${step.done ? 'rgba(15,158,153,0.2)' : step.locked ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.06)'}`, opacity: step.locked ? 0.5 : 1 }}>
-                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: step.done ? '#0F9E99' : 'transparent', border: `2px solid ${step.done ? '#0F9E99' : 'rgba(255,255,255,0.2)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, background: step.done ? 'rgba(15,158,153,0.08)' : step.locked ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.03)', border: `1px solid ${step.done ? 'rgba(15,158,153,0.2)' : step.locked ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.06)'}`, opacity: step.locked ? 0.5 : 1 }}>
+                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: step.done ? '#0F9E99' : 'transparent', border: `2px solid ${step.done ? '#0F9E99' : 'rgba(255,255,255,0.2)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       {step.done
-                        ? <span style={{ color: '#fff', fontSize: 12, fontWeight: 700 }}>✓</span>
-                        : <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, fontWeight: 700 }}>{i + 1}</span>
+                        ? <span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>✓</span>
+                        : <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, fontWeight: 700 }}>{i + 1}</span>
                       }
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: 13, color: step.done ? '#0F9E99' : '#F2E8D1', margin: '0 0 2px' }}>{step.label}</p>
-                      <p style={{ fontFamily: 'Inter', fontSize: 11, color: '#7A6E58', margin: 0 }}>{step.locked ? `🔒 ${step.lockMsg}` : step.sub}</p>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: 12, color: step.done ? '#0F9E99' : '#F2E8D1', margin: '0 0 1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{step.label}</p>
+                      <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#7A6E58', margin: 0 }}>{step.locked ? `🔒 ${step.lockMsg}` : step.sub}</p>
                     </div>
                     {!step.done && !step.locked && (
                       <button onClick={() => navigate(step.path)}
-                        style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 12, background: '#0F9E99', color: '#fff', border: 'none', borderRadius: 99, padding: '6px 14px', cursor: 'pointer', flexShrink: 0 }}>
+                        style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 11, background: '#0F9E99', color: '#fff', border: 'none', borderRadius: 99, padding: '5px 12px', cursor: 'pointer', flexShrink: 0 }}>
                         {step.cta}
                       </button>
                     )}
@@ -158,14 +133,14 @@ export default function Dashboard() {
           )}
 
           {/* NORTH STAR */}
-          <div style={{ background: '#1A2118', borderRadius: 20, padding: '28px', border: '1px solid rgba(251,160,2,0.2)' }}>
+          <div style={{ background: '#1A2118', borderRadius: 20, padding: isMobile ? '20px 16px' : '28px', border: '1px solid rgba(251,160,2,0.2)' }}>
             <p style={lbl('#FBA002')}>Your north star</p>
             {chosenSelf ? (
-              <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 24, color: '#FBA002', margin: '0 0 4px', lineHeight: 1.2 }}>{chosenSelf.job_title}</p>
-                  <p style={{ fontFamily: 'Inter', fontSize: 13, color: '#B5A98A', margin: '0 0 16px', fontWeight: 500 }}>{chosenSelf.company_type} · {chosenSelf.city} · {chosenSelf.year}</p>
-                  <div style={{ marginBottom: 16 }}>
+              <div style={{ display: 'flex', gap: isMobile ? 12 : 24, alignItems: 'flex-start', flexDirection: isMobile ? 'column' : 'row' }}>
+                <div style={{ flex: 1, width: '100%' }}>
+                  <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: isMobile ? 20 : 24, color: '#FBA002', margin: '0 0 4px', lineHeight: 1.2 }}>{chosenSelf.job_title}</p>
+                  <p style={{ fontFamily: 'Inter', fontSize: 13, color: '#B5A98A', margin: '0 0 14px', fontWeight: 500 }}>{chosenSelf.company_type} · {chosenSelf.city} · {chosenSelf.year}</p>
+                  <div style={{ marginBottom: 14 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
                       <span style={{ fontFamily: 'Inter', fontSize: 10, color: '#7A6E58', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Resonance</span>
                       <span style={{ fontFamily: 'Inter', fontSize: 10, color: '#FBA002', fontWeight: 700 }}>{chosenSelf.resonance_score || 0}%</span>
@@ -174,38 +149,44 @@ export default function Dashboard() {
                       <div style={{ height: 4, width: `${chosenSelf.resonance_score || 0}%`, background: '#FBA002', borderRadius: 99 }} />
                     </div>
                   </div>
-                  <p style={{ fontFamily: 'Inter', fontStyle: 'italic', fontSize: 13, color: '#F2E8D1', margin: '0 0 18px', lineHeight: 1.7, borderLeft: '2px solid rgba(251,160,2,0.4)', paddingLeft: 12 }}>
+                  <p style={{ fontFamily: 'Inter', fontStyle: 'italic', fontSize: 13, color: '#F2E8D1', margin: '0 0 16px', lineHeight: 1.7, borderLeft: '2px solid rgba(251,160,2,0.4)', paddingLeft: 12 }}>
                     "{chosenSelf.intro_quote}"
                   </p>
-                  <div style={{ display: 'flex', gap: 10 }}>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <button onClick={() => navigate('/simulate')}
-                      style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 13, background: '#FBA002', color: '#1A2118', border: 'none', borderRadius: 99, padding: '10px 20px', cursor: 'pointer' }}>
+                      style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 13, background: '#FBA002', color: '#1A2118', border: 'none', borderRadius: 99, padding: '10px 18px', cursor: 'pointer' }}>
                       Chat with future self →
                     </button>
                     <button onClick={() => navigate('/simulate')}
-                      style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 13, background: 'transparent', color: '#B5A98A', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 99, padding: '10px 20px', cursor: 'pointer' }}>
+                      style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 13, background: 'transparent', color: '#B5A98A', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 99, padding: '10px 18px', cursor: 'pointer' }}>
                       Change path
                     </button>
                   </div>
                 </div>
-                <div style={{ flexShrink: 0, textAlign: 'center', background: 'rgba(251,160,2,0.08)', borderRadius: 14, padding: '16px 20px', border: '1px solid rgba(251,160,2,0.15)' }}>
-                  <p style={{ fontFamily: 'Inter', fontWeight: 800, fontSize: 40, color: '#FBA002', margin: '0 0 2px', lineHeight: 1 }}>
-                    {Math.max(0, Math.round((new Date(chosenSelf.year, 0) - new Date()) / (1000 * 60 * 60 * 24)))}
-                  </p>
-                  <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#7A6E58', margin: 0, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>days left</p>
-                  <div style={{ width: '100%', height: 3, background: 'rgba(251,160,2,0.15)', borderRadius: 99, marginTop: 12 }}>
-                    <div style={{ height: 3, width: `${gapScore}%`, background: '#FBA002', borderRadius: 99 }} />
+                {!isMobile && (
+                  <div style={{ flexShrink: 0, textAlign: 'center', background: 'rgba(251,160,2,0.08)', borderRadius: 14, padding: '16px 20px', border: '1px solid rgba(251,160,2,0.15)' }}>
+                    <p style={{ fontFamily: 'Inter', fontWeight: 800, fontSize: 40, color: '#FBA002', margin: '0 0 2px', lineHeight: 1 }}>
+                      {Math.max(0, Math.round((new Date(chosenSelf.year, 0) - new Date()) / (1000 * 60 * 60 * 24)))}
+                    </p>
+                    <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#7A6E58', margin: 0, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>days left</p>
+                    <div style={{ width: '100%', height: 3, background: 'rgba(251,160,2,0.15)', borderRadius: 99, marginTop: 12 }}>
+                      <div style={{ height: 3, width: `${gapScore}%`, background: '#FBA002', borderRadius: 99 }} />
+                    </div>
+                    <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#7A6E58', margin: '6px 0 0', fontWeight: 600 }}>{gapScore}% complete</p>
                   </div>
-                  <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#7A6E58', margin: '6px 0 0', fontWeight: 600 }}>{gapScore}% complete</p>
-                </div>
+                )}
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: '20px 0' }}>
                 <p style={{ fontFamily: 'Inter', fontSize: 14, color: '#7A6E58', margin: '0 0 16px', lineHeight: 1.6 }}>
                   You haven't chosen your future self yet. Meet 3 AI versions of yourself — 5 years from now.
                 </p>
+                <button onClick={() => navigate('/discover')}
+                  style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 13, background: '#D4A842', color: '#1A2118', border: 'none', borderRadius: 99, padding: '10px 20px', cursor: 'pointer', marginBottom: 10, display: 'block', width: '100%' }}>
+                  🧭 I don't know what I want — help me find out
+                </button>
                 <button onClick={() => navigate('/simulate')}
-                  style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 14, background: '#FBA002', color: '#1A2118', border: 'none', borderRadius: 99, padding: '12px 28px', cursor: 'pointer' }}>
+                  style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 13, background: '#FBA002', color: '#1A2118', border: 'none', borderRadius: 99, padding: '10px 20px', cursor: 'pointer', width: '100%' }}>
                   Meet your future self →
                 </button>
               </div>
@@ -216,7 +197,7 @@ export default function Dashboard() {
           {dailyQuote && (
             <div style={card({ background: `${c.accent}08`, border: `1px solid ${c.accent}25` })}>
               <p style={lbl(c.accent)}>Today's message from your future self</p>
-              <p style={{ fontFamily: 'Inter', fontStyle: 'italic', fontSize: 14, color: c.text, margin: 0, lineHeight: 1.75, fontWeight: 500 }}>
+              <p style={{ fontFamily: 'Inter', fontStyle: 'italic', fontSize: 13, color: c.text, margin: 0, lineHeight: 1.75, fontWeight: 500 }}>
                 "{dailyQuote.content.slice(0, 200)}{dailyQuote.content.length > 200 ? '...' : ''}"
               </p>
             </div>
@@ -228,19 +209,15 @@ export default function Dashboard() {
             {plan && nextTask ? (
               <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-                  <p style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 16, color: c.text, margin: 0 }}>{nextTask.title}</p>
-                  <span style={{ fontFamily: 'Inter', fontSize: 12, color: c.textMuted }}>{completedTasks}/{totalTasks} done</span>
+                  <p style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: isMobile ? 14 : 16, color: c.text, margin: 0, flex: 1, marginRight: 8 }}>{nextTask.title}</p>
+                  <span style={{ fontFamily: 'Inter', fontSize: 12, color: c.textMuted, flexShrink: 0 }}>{completedTasks}/{totalTasks}</span>
                 </div>
                 <div style={{ height: 6, background: `${c.accent}15`, borderRadius: 99, marginBottom: 12, overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: `${(completedTasks / totalTasks) * 100}%`, background: c.accent, borderRadius: 99, transition: 'width 0.5s' }} />
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    {[
-                      { label: 'M1', done: completedTasks >= 9 },
-                      { label: 'M2', done: completedTasks >= 18 },
-                      { label: 'M3', done: completedTasks >= 27 },
-                    ].map(m => (
+                    {[{ label: 'M1', done: completedTasks >= 9 }, { label: 'M2', done: completedTasks >= 18 }, { label: 'M3', done: completedTasks >= 27 }].map(m => (
                       <div key={m.label} style={{ width: 28, height: 28, borderRadius: 8, background: m.done ? c.accent : `${c.accent}15`, border: `1.5px solid ${m.done ? c.accent : c.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <span style={{ fontFamily: 'Inter', fontSize: 10, fontWeight: 700, color: m.done ? '#fff' : c.textMuted }}>{m.done ? '✓' : m.label}</span>
                       </div>
@@ -257,7 +234,7 @@ export default function Dashboard() {
                 <p style={{ fontFamily: 'Inter', fontSize: 13, color: c.textMuted, margin: 0 }}>No spark plan yet.</p>
                 <button onClick={() => navigate('/sparkplan')}
                   style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 13, background: c.accent, color: '#fff', border: 'none', borderRadius: 99, padding: '9px 18px', cursor: 'pointer' }}>
-                  Generate plan →
+                  Generate →
                 </button>
               </div>
             )}
@@ -266,23 +243,23 @@ export default function Dashboard() {
           {/* QUICK ACTIONS */}
           <div style={card()}>
             <p style={lbl()}>Quick actions</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(3, 1fr)', gap: 8 }}>
               {quickActions.map(action => (
                 <button key={action.path} onClick={() => navigate(action.path)}
-                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '14px 10px', borderRadius: 12, border: `1px solid ${c.border}`, background: c.bgMid, cursor: 'pointer', transition: 'all 0.15s' }}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '12px 8px', borderRadius: 12, border: `1px solid ${c.border}`, background: c.bgMid, cursor: 'pointer', transition: 'all 0.15s' }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = action.color; e.currentTarget.style.background = `${action.color}10` }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.bgMid }}
                 >
-                  <span style={{ fontSize: 20 }}>{action.icon}</span>
-                  <span style={{ fontFamily: 'Inter', fontSize: 11, fontWeight: 600, color: c.textMuted, textAlign: 'center', lineHeight: 1.3 }}>{action.label}</span>
+                  <span style={{ fontSize: 18 }}>{action.icon}</span>
+                  <span style={{ fontFamily: 'Inter', fontSize: 10, fontWeight: 600, color: c.textMuted, textAlign: 'center', lineHeight: 1.3 }}>{action.label}</span>
                 </button>
               ))}
             </div>
           </div>
         </div>
 
-        {/* RIGHT */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* RIGHT — on mobile this shows below left */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
           {/* REALITY CHECK SCORE */}
           <div style={card()}>
@@ -320,7 +297,7 @@ export default function Dashboard() {
             ) : (
               <>
                 <p style={{ fontFamily: 'Inter', fontSize: 13, color: c.textMuted, margin: '0 0 14px', lineHeight: 1.6 }}>
-                  {hasSkills ? 'You\'ve assessed your skills. Now get your honest score.' : 'Complete Skills Assessment first for a more accurate score.'}
+                  {hasSkills ? "You've assessed your skills. Now get your honest score." : 'Complete Skills Assessment first for a more accurate score.'}
                 </p>
                 <button onClick={() => navigate(hasSkills ? '/realitycheck' : '/skills')}
                   style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 13, background: '#722F37', color: '#EEFFBB', border: 'none', borderRadius: 99, padding: '10px', cursor: 'pointer', width: '100%' }}>
@@ -343,28 +320,6 @@ export default function Dashboard() {
               <span style={{ fontFamily: 'Inter', fontSize: 11, color: '#722F37', fontWeight: 600 }}>Where you are</span>
               <span style={{ fontFamily: 'Inter', fontSize: 11, color: c.accent, fontWeight: 700 }}>{gapScore}% bridged</span>
               <span style={{ fontFamily: 'Inter', fontSize: 11, color: c.accent, fontWeight: 600 }}>Target role</span>
-            </div>
-          </div>
-
-          {/* PATH CLARITY */}
-          <div style={card()}>
-            <p style={lbl()}>Path clarity</p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <svg width="56" height="56" viewBox="0 0 64 64" style={{ flexShrink: 0 }}>
-                <circle cx="32" cy="32" r="24" fill="none" stroke={`${c.accent}20`} strokeWidth="5" />
-                <circle cx="32" cy="32" r="24" fill="none" stroke={c.accent} strokeWidth="5"
-                  strokeDasharray={`${2 * Math.PI * 24 * gapScore / 100} ${2 * Math.PI * 24}`}
-                  strokeLinecap="round" transform="rotate(-90 32 32)" />
-                <text x="32" y="37" textAnchor="middle" style={{ fontFamily: 'Inter', fontWeight: 800, fontSize: 12, fill: c.accent }}>{gapScore}%</text>
-              </svg>
-              <div>
-                <p style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 14, color: c.text, margin: '0 0 4px' }}>
-                  {gapScore < 30 ? 'Just starting out' : gapScore < 60 ? 'Building momentum' : gapScore < 85 ? 'Getting clear' : 'Almost there!'}
-                </p>
-                <p style={{ fontFamily: 'Inter', fontSize: 12, color: c.textMuted, margin: 0, lineHeight: 1.5 }}>
-                  {gapScore < 30 ? 'Complete your first steps to build clarity.' : gapScore < 60 ? "Keep going — you're making real progress." : "You're close. Push through the last mile."}
-                </p>
-              </div>
             </div>
           </div>
 
