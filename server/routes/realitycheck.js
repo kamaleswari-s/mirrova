@@ -7,12 +7,12 @@ const router = express.Router();
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const systemPrompts = {
-  English: `You are a brutally honest career intelligence AI. You analyze a student's profile and give them a Reality Check Score — not to demotivate them, but to show them exactly where they stand and what to do next. Be direct, specific, data-driven. No fluff.`,
-  Hindi: `आप एक बेहद ईमानदार career intelligence AI हैं। आप एक student की profile analyze करके उन्हें Reality Check Score देते हैं — उन्हें demotivate करने के लिए नहीं, बल्कि यह दिखाने के लिए कि वे कहाँ खड़े हैं और आगे क्या करना है। Direct, specific और data-driven रहें।`,
-  Tamil: `நீங்கள் ஒரு மிகவும் நேர்மையான career intelligence AI. ஒரு மாணவரின் profile-ஐ analyze செய்து Reality Check Score கொடுக்கிறீர்கள் — அவர்களை demotivate செய்வதற்காக அல்ல, அவர்கள் எங்கே நிற்கிறார்கள் என்பதை காட்டுவதற்காக.`,
-  Telugu: `మీరు చాలా నిజాయితీగా ఉన్న career intelligence AI. ఒక విద్యార్థి యొక్క profile ని విశ్లేషించి Reality Check Score ఇస్తారు — వారిని demotivate చేయడానికి కాదు, వారు ఎక్కడ నిలబడ్డారో చూపించడానికి.`,
-  Kannada: `ನೀವು ತುಂಬಾ ಪ್ರಾಮಾಣಿಕ career intelligence AI. ಒಬ್ಬ ವಿದ್ಯಾರ್ಥಿಯ profile ಅನ್ನು analyze ಮಾಡಿ Reality Check Score ಕೊಡುತ್ತೀರಿ — ಅವರನ್ನು demotivate ಮಾಡಲು ಅಲ್ಲ, ಅವರು ಎಲ್ಲಿ ನಿಂತಿದ್ದಾರೆ ಎಂದು ತೋರಿಸಲು.`,
-  Bengali: `আপনি একটি সৎ career intelligence AI। একজন ছাত্রের profile বিশ্লেষণ করে Reality Check Score দেন — তাদের demotivate করতে নয়, তারা কোথায় আছে তা দেখাতে।`,
+  English: `You are a brutally honest career intelligence AI. You analyze a student's profile and give them a Reality Check Score — not to demotivate them, but to show them exactly where they stand and what to do next. Be direct, specific, data-driven. No fluff. Every student's score MUST be unique based on their specific profile — never give the same score twice.`,
+  Hindi: `आप एक बेहद ईमानदार career intelligence AI हैं। हर student का score उनकी unique profile के आधार पर अलग होना चाहिए।`,
+  Tamil: `நீங்கள் ஒரு மிகவும் நேர்மையான career intelligence AI. ஒவ்வொரு மாணவரின் score அவர்களின் தனித்துவமான profile-ஐ அடிப்படையாகக் கொண்டு வேறுபட வேண்டும்.`,
+  Telugu: `మీరు చాలా నిజాయితీగా ఉన్న career intelligence AI. ప్రతి విద్యార్థి యొక్క score వారి unique profile ఆధారంగా భిన్నంగా ఉండాలి.`,
+  Kannada: `ನೀವು ತುಂಬಾ ಪ್ರಾಮಾಣಿಕ career intelligence AI. ಪ್ರತಿ ವಿದ್ಯಾರ್ಥಿಯ score ಅವರ unique profile ಆಧಾರದಲ್ಲಿ ಭಿನ್ನವಾಗಿರಬೇಕು.`,
+  Bengali: `আপনি একটি সৎ career intelligence AI। প্রতিটি ছাত্রের score তাদের unique profile এর উপর ভিত্তি করে আলাদা হওয়া উচিত।`,
 }
 
 // POST /api/realitycheck/generate
@@ -29,7 +29,9 @@ router.post('/generate', authMiddleware, async (req, res) => {
     const language = profile.preferred_language || 'English'
     const systemPrompt = systemPrompts[language] || systemPrompts['English']
 
-    const prompt = `Analyze this student's profile and generate a Reality Check Score.
+    const prompt = `Analyze this student's COMPLETE profile and generate a personalized Reality Check Score.
+    
+IMPORTANT: Base the score STRICTLY on this specific student's profile. The score must reflect their unique situation.
 
 Student Profile:
 - Name: ${profile.name}
@@ -39,18 +41,36 @@ Student Profile:
 - Biggest fear: ${profile.biggest_fear || 'not specified'}
 - Recent rejection: ${profile.recent_rejection || 'none mentioned'}
 - Success vision: ${profile.success_vision || 'not specified'}
+- City/State: ${profile.city || 'not specified'}
+- Education level & college: ${profile.education_level || 'not specified'}
+- Hours per day available: ${profile.hours_per_day || 'not specified'}
+- Built anything before: ${profile.built_anything || 'nothing mentioned'}
+- Biggest blocker right now: ${profile.biggest_blocker || 'not specified'}
 
-Generate a brutally honest reality check. Return a JSON object with these exact fields:
+Scoring guide (be strict and honest):
+- 0-30: Critical — major gaps, no direction, needs immediate intervention
+- 31-50: Needs Work — some direction but significant gaps
+- 51-70: Average — on track but missing key elements
+- 71-85: Good — strong foundation with minor gaps
+- 86-100: Strong — exceptional readiness
 
+Consider:
+- College tier matters (IIT/NIT vs private Tier 3 = different market reality)
+- City matters (metro vs rural = different opportunities)
+- Hours available matters (1hr/day vs 4hrs/day = different timeline)
+- Built anything = huge positive signal
+- Biggest blocker reveals hidden challenges
+
+Return a JSON object:
 {
-  "overall_score": <number 0-100>,
-  "score_label": "<one of: Critical, Needs Work, Average, Good, Strong>",
-  "headline": "<one punchy sentence summarizing their reality in ${language}>",
-  "market_reality": "<2-3 sentences about the actual job market for their dream direction in India in ${language}>",
-  "biggest_gap": "<the single most critical skill or experience gap blocking them in ${language}>",
-  "hidden_strength": "<one genuine strength they may be undervaluing in ${language}>",
-  "brutal_truth": "<one thing nobody is telling them that they need to hear in ${language}>",
-  "this_week_action": "<the single most important thing they should do THIS WEEK in ${language}>",
+  "overall_score": <number 0-100, must be specific to this student>,
+  "score_label": "<Critical/Needs Work/Average/Good/Strong>",
+  "headline": "<one punchy sentence in ${language}>",
+  "market_reality": "<2-3 sentences about actual job market for their dream in India in ${language}>",
+  "biggest_gap": "<most critical gap in ${language}>",
+  "hidden_strength": "<genuine undervalued strength in ${language}>",
+  "brutal_truth": "<one thing nobody tells them in ${language}>",
+  "this_week_action": "<most important thing to do THIS WEEK in ${language}>",
   "dimensions": [
     { "label": "Skill Match", "score": <0-100>, "note": "<brief note in ${language}>" },
     { "label": "Market Demand", "score": <0-100>, "note": "<brief note in ${language}>" },
@@ -67,7 +87,7 @@ Return ONLY valid JSON. No markdown. No explanation.`
         { role: 'system', content: systemPrompt },
         { role: 'user', content: prompt }
       ],
-      temperature: 0.7,
+      temperature: 0.9,
       max_tokens: 1500
     });
 
@@ -79,7 +99,6 @@ Return ONLY valid JSON. No markdown. No explanation.`
       return res.status(500).json({ error: 'AI parse error', raw: completion.choices[0].message.content });
     }
 
-    // Save to DB
     await pool.query(
       `UPDATE profiles SET reality_check=$1, updated_at=NOW() WHERE user_id=$2`,
       [JSON.stringify(result), req.user.id]
