@@ -284,9 +284,9 @@ export default function RejectionDecoder() {
                     style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 13, background: 'transparent', color: c.accent, border: `1.5px solid ${c.accent}`, borderRadius: 99, padding: '11px', cursor: 'pointer', width: '100%' }}>
                     Get reality check →
                   </button>
-                  <button onClick={() => navigate('/blindspots')}
+                  <button onClick={() => navigate('/swot')}
                     style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 13, background: 'transparent', color: c.textMuted, border: `1.5px solid ${c.border}`, borderRadius: 99, padding: '11px', cursor: 'pointer', width: '100%' }}>
-                    Find blind spots →
+                    Career SWOT →
                   </button>
                   <button onClick={reset}
                     style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 13, background: 'transparent', color: c.textMuted, border: `1.5px solid ${c.border}`, borderRadius: 99, padding: '11px', cursor: 'pointer', width: '100%' }}>

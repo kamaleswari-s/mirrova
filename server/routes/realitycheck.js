@@ -29,8 +29,29 @@ router.post('/generate', authMiddleware, async (req, res) => {
     const language = profile.preferred_language || 'English'
     const systemPrompt = systemPrompts[language] || systemPrompts['English']
 
+    // Parse skills assessment if available
+    let skillsData = null
+    if (profile.skills_assessment) {
+      try {
+        const sa = typeof profile.skills_assessment === 'string'
+          ? JSON.parse(profile.skills_assessment)
+          : profile.skills_assessment
+        skillsData = sa.ratings || null
+      } catch (e) {}
+    }
+
+    // Format skills for prompt
+    const skillsText = skillsData
+      ? Object.entries(skillsData)
+          .map(([skill, rating]) => {
+            const labels = ['', 'Beginner', 'Familiar', 'Confident', 'Expert']
+            return `${skill}: ${labels[rating] || rating}`
+          })
+          .join(', ')
+      : 'Not assessed yet'
+
     const prompt = `Analyze this student's COMPLETE profile and generate a personalized Reality Check Score.
-    
+
 IMPORTANT: Base the score STRICTLY on this specific student's profile. The score must reflect their unique situation.
 
 Student Profile:
@@ -46,6 +67,7 @@ Student Profile:
 - Hours per day available: ${profile.hours_per_day || 'not specified'}
 - Built anything before: ${profile.built_anything || 'nothing mentioned'}
 - Biggest blocker right now: ${profile.biggest_blocker || 'not specified'}
+- Self-assessed skills: ${skillsText}
 
 Scoring guide (be strict and honest):
 - 0-30: Critical — major gaps, no direction, needs immediate intervention
@@ -59,6 +81,9 @@ Consider:
 - City matters (metro vs rural = different opportunities)
 - Hours available matters (1hr/day vs 4hrs/day = different timeline)
 - Built anything = huge positive signal
+- Self-assessed skills reveal real capability gaps
+- If student rated themselves low on critical skills → lower score
+- If student rated themselves high on relevant skills → higher score
 - Biggest blocker reveals hidden challenges
 
 Return a JSON object:
