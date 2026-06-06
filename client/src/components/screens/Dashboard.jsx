@@ -12,6 +12,7 @@ export default function Dashboard() {
   const [plan, setPlan] = useState(null)
   const [realityCheck, setRealityCheck] = useState(null)
   const [chatMessages, setChatMessages] = useState([])
+  const [skills, setSkills] = useState(null)
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
@@ -27,6 +28,7 @@ export default function Dashboard() {
     }).catch(() => {})
     axios.get('/api/sparkplan').then(r => setPlan(r.data)).catch(() => {})
     axios.get('/api/realitycheck').then(r => setRealityCheck(r.data)).catch(() => {})
+    axios.get('/api/skills').then(r => setSkills(r.data)).catch(() => {})
   }, [])
 
   const chosenSelf = futures.find(f => f.is_chosen)
@@ -36,6 +38,7 @@ export default function Dashboard() {
   const gapScore = Math.min(100, Math.round((completedTasks / totalTasks) * 100) + 15)
   const futureQuotes = chatMessages.filter(m => m.role === 'assistant')
   const dailyQuote = futureQuotes.length > 0 ? futureQuotes[new Date().getDate() % futureQuotes.length] : null
+  const hasSkills = skills && skills.ratings && Object.keys(skills.ratings).length > 0
 
   const scoreColor = (score) => {
     if (score >= 80) return '#0F9E99'
@@ -61,12 +64,48 @@ export default function Dashboard() {
 
   const quickActions = [
     { label: 'Simulate', icon: '🔮', path: '/simulate', color: '#615091' },
-    { label: 'Reality Check', icon: '⚡', path: '/realitycheck', color: '#722F37' },
     { label: 'Skills', icon: '📊', path: '/skills', color: '#0F9E99' },
+    { label: 'Reality Check', icon: '⚡', path: '/realitycheck', color: '#722F37' },
     { label: 'Career SWOT', icon: '⊞', path: '/swot', color: '#FBA002' },
     { label: 'Resume', icon: '📄', path: '/resume', color: '#38683D' },
     { label: 'Spark Plan', icon: '📅', path: '/sparkplan', color: '#D4A842' },
   ]
+
+  // Journey steps in correct order
+  const journeySteps = [
+    {
+      done: !!chosenSelf,
+      label: 'Meet your future selves',
+      sub: 'Step 1 — Find your north star',
+      path: '/simulate',
+      cta: 'Go →'
+    },
+    {
+      done: hasSkills,
+      label: 'Assess your skills',
+      sub: 'Step 2 — Know what you actually have',
+      path: '/skills',
+      cta: 'Go →'
+    },
+    {
+      done: !!realityCheck,
+      label: 'Get your Reality Check',
+      sub: 'Step 3 — Find out honestly where you stand',
+      path: '/realitycheck',
+      cta: 'Go →',
+      locked: !hasSkills,
+      lockMsg: 'Complete Skills first'
+    },
+    {
+      done: !!plan,
+      label: 'Build your Spark Plan',
+      sub: 'Step 4 — Get your 90-day action plan',
+      path: '/sparkplan',
+      cta: 'Go →'
+    },
+  ]
+
+  const allDone = journeySteps.every(s => s.done)
 
   return (
     <div style={{ padding: '40px 48px', color: c.text }}>
@@ -87,19 +126,15 @@ export default function Dashboard() {
         {/* LEFT */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          {/* ONBOARDING CHECKLIST — only show if incomplete */}
-          {(!chosenSelf || !realityCheck || !plan) && (
+          {/* JOURNEY CHECKLIST */}
+          {!allDone && (
             <div style={{ background: 'linear-gradient(135deg, #1A2118, #0E1512)', borderRadius: 16, padding: '20px 24px', border: '1px solid rgba(15,158,153,0.2)' }}>
               <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#0F9E99', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 12px' }}>
-                🚀 Get started — 3 steps to unlock your full career intelligence
+                🚀 Your Mirrova journey — complete in order
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {[
-                  { done: !!chosenSelf, label: 'Meet your future selves', sub: 'See 3 AI versions of yourself in 2029', path: '/simulate', cta: 'Go →' },
-                  { done: !!realityCheck, label: 'Get your Reality Check', sub: 'Find out honestly where you stand', path: '/realitycheck', cta: 'Go →' },
-                  { done: !!plan, label: 'Generate your Spark Plan', sub: 'Build your 90-day action plan', path: '/sparkplan', cta: 'Go →' },
-                ].map((step, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, background: step.done ? 'rgba(15,158,153,0.08)' : 'rgba(255,255,255,0.03)', border: `1px solid ${step.done ? 'rgba(15,158,153,0.2)' : 'rgba(255,255,255,0.06)'}` }}>
+                {journeySteps.map((step, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, background: step.done ? 'rgba(15,158,153,0.08)' : step.locked ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.03)', border: `1px solid ${step.done ? 'rgba(15,158,153,0.2)' : step.locked ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.06)'}`, opacity: step.locked ? 0.5 : 1 }}>
                     <div style={{ width: 24, height: 24, borderRadius: '50%', background: step.done ? '#0F9E99' : 'transparent', border: `2px solid ${step.done ? '#0F9E99' : 'rgba(255,255,255,0.2)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       {step.done
                         ? <span style={{ color: '#fff', fontSize: 12, fontWeight: 700 }}>✓</span>
@@ -108,9 +143,9 @@ export default function Dashboard() {
                     </div>
                     <div style={{ flex: 1 }}>
                       <p style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: 13, color: step.done ? '#0F9E99' : '#F2E8D1', margin: '0 0 2px' }}>{step.label}</p>
-                      <p style={{ fontFamily: 'Inter', fontSize: 11, color: '#7A6E58', margin: 0 }}>{step.sub}</p>
+                      <p style={{ fontFamily: 'Inter', fontSize: 11, color: '#7A6E58', margin: 0 }}>{step.locked ? `🔒 ${step.lockMsg}` : step.sub}</p>
                     </div>
-                    {!step.done && (
+                    {!step.done && !step.locked && (
                       <button onClick={() => navigate(step.path)}
                         style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 12, background: '#0F9E99', color: '#fff', border: 'none', borderRadius: 99, padding: '6px 14px', cursor: 'pointer', flexShrink: 0 }}>
                         {step.cta}
@@ -285,11 +320,11 @@ export default function Dashboard() {
             ) : (
               <>
                 <p style={{ fontFamily: 'Inter', fontSize: 13, color: c.textMuted, margin: '0 0 14px', lineHeight: 1.6 }}>
-                  Get a brutally honest score on where you stand — and what to do next.
+                  {hasSkills ? 'You\'ve assessed your skills. Now get your honest score.' : 'Complete Skills Assessment first for a more accurate score.'}
                 </p>
-                <button onClick={() => navigate('/realitycheck')}
+                <button onClick={() => navigate(hasSkills ? '/realitycheck' : '/skills')}
                   style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 13, background: '#722F37', color: '#EEFFBB', border: 'none', borderRadius: 99, padding: '10px', cursor: 'pointer', width: '100%' }}>
-                  Get reality check →
+                  {hasSkills ? 'Get reality check →' : 'Assess skills first →'}
                 </button>
               </>
             )}
@@ -327,7 +362,7 @@ export default function Dashboard() {
                   {gapScore < 30 ? 'Just starting out' : gapScore < 60 ? 'Building momentum' : gapScore < 85 ? 'Getting clear' : 'Almost there!'}
                 </p>
                 <p style={{ fontFamily: 'Inter', fontSize: 12, color: c.textMuted, margin: 0, lineHeight: 1.5 }}>
-                  {gapScore < 30 ? 'Complete your first features to build clarity.' : gapScore < 60 ? "Keep going — you're making real progress." : "You're close. Push through the last mile."}
+                  {gapScore < 30 ? 'Complete your first steps to build clarity.' : gapScore < 60 ? "Keep going — you're making real progress." : "You're close. Push through the last mile."}
                 </p>
               </div>
             </div>

@@ -5,8 +5,8 @@ import { useTheme, THEMES } from '../../context/ThemeContext'
 const navItems = [
   { to: '/dashboard', label: 'Home', icon: '🏠' },
   { to: '/simulate', label: 'Simulate', icon: '🔮' },
-  { to: '/realitycheck', label: 'Reality Check', icon: '⚡' },
   { to: '/skills', label: 'Skills', icon: '📊' },
+  { to: '/realitycheck', label: 'Reality Check', icon: '⚡' },
   { to: '/swot', label: 'Career SWOT', icon: '⊞' },
   { to: '/resume', label: 'Resume', icon: '📄' },
   { to: '/rejection', label: 'Rejection Decoder', icon: '🔍' },
@@ -23,7 +23,7 @@ export default function Sidebar() {
   return (
     <aside style={{
       background: colors.bgSidebar,
-      width: 300,
+      width: 240,
       height: '100vh',
       display: 'flex',
       flexDirection: 'column',
