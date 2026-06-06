@@ -1,7 +1,6 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import { useTheme } from '../../context/ThemeContext'
-import useIsMobile from '../../hooks/useIsMobile'
 
 const mobileNavItems = [
   { to: '/dashboard', label: 'Home', icon: '🏠' },
@@ -15,89 +14,110 @@ export default function AppLayout() {
   const { colors: c } = useTheme()
   const navigate = useNavigate()
   const location = useLocation()
-  const isMobile = useIsMobile()
 
   return (
-    <div style={{
-      display: 'flex',
-      height: '100vh',
-      background: c.bg,
-      overflow: 'hidden',
-      position: 'relative'
-    }}>
+    <>
+      <style>{`
+        .app-wrapper {
+          display: flex;
+          height: 100vh;
+          background: ${c.bg};
+          overflow: hidden;
+        }
+        .app-sidebar {
+          display: flex;
+          flex-shrink: 0;
+        }
+        .app-main {
+          flex: 1;
+          overflow-y: auto;
+          height: 100vh;
+          min-width: 0;
+        }
+        .app-main-inner {
+          width: 100%;
+          max-width: 1100px;
+          margin: 0 auto;
+          padding-bottom: 0;
+        }
+        .mobile-bottom-nav {
+          display: none;
+        }
+        @media (max-width: 768px) {
+          .app-sidebar {
+            display: none !important;
+          }
+          .app-main-inner {
+            max-width: 100% !important;
+            padding-bottom: 72px !important;
+          }
+          .mobile-bottom-nav {
+            display: flex !important;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: ${c.bgCard || '#1A2118'};
+            border-top: 1px solid rgba(255,255,255,0.1);
+            z-index: 999;
+            align-items: center;
+            justify-content: space-around;
+          }
+          .mobile-nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px 0;
+            flex: 1;
+          }
+          .mobile-nav-icon {
+            font-size: 22px;
+            line-height: 1;
+          }
+          .mobile-nav-label {
+            font-family: Inter, sans-serif;
+            font-size: 9px;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+          }
+        }
+      `}</style>
 
-      {/* Sidebar — desktop only */}
-      {!isMobile && <Sidebar />}
-
-      {/* Main content */}
-      <main style={{
-        flex: 1,
-        overflowY: 'auto',
-        height: '100vh',
-        width: '100%',
-        minWidth: 0,
-      }}>
-        <div style={{
-          width: '100%',
-          maxWidth: isMobile ? '100%' : 1100,
-          margin: '0 auto',
-          paddingBottom: isMobile ? 72 : 0,
-        }}>
-          <Outlet />
+      <div className="app-wrapper">
+        <div className="app-sidebar">
+          <Sidebar />
         </div>
-      </main>
 
-      {/* Mobile bottom nav */}
-      {isMobile && (
-        <nav style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: 60,
-          background: c.bgCard || '#1A2118',
-          borderTop: '1px solid rgba(255,255,255,0.1)',
-          zIndex: 999,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-around',
-          paddingBottom: 'env(safe-area-inset-bottom)',
-        }}>
+        <main className="app-main">
+          <div className="app-main-inner">
+            <Outlet />
+          </div>
+        </main>
+
+        <nav className="mobile-bottom-nav">
           {mobileNavItems.map(item => {
             const isActive = location.pathname === item.to
             return (
               <button
                 key={item.to}
+                className="mobile-nav-btn"
                 onClick={() => navigate(item.to)}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 2,
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '6px 0',
-                  flex: 1,
-                  minWidth: 0,
-                }}>
-                <span style={{ fontSize: 22, lineHeight: 1 }}>{item.icon}</span>
-                <span style={{
-                  fontFamily: 'Inter',
-                  fontSize: 9,
-                  fontWeight: isActive ? 700 : 400,
-                  color: isActive ? '#0F9E99' : '#7A6E58',
-                  letterSpacing: '0.02em',
-                  whiteSpace: 'nowrap',
-                }}>
+              >
+                <span className="mobile-nav-icon">{item.icon}</span>
+                <span className="mobile-nav-label" style={{ color: isActive ? '#0F9E99' : '#7A6E58', fontWeight: isActive ? 700 : 400 }}>
                   {item.label}
                 </span>
               </button>
             )
           })}
         </nav>
-      )}
-    </div>
+      </div>
+    </>
   )
 }
