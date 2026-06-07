@@ -43,6 +43,18 @@ export default function RealityCheck() {
     return 'Critical'
   }
 
+  // Generate real resource links from the biggest gap
+  const getResources = (gap) => {
+    if (!gap) return null
+    const q = encodeURIComponent(gap)
+    return [
+      { icon: '▶️', label: 'Watch on YouTube', url: `https://www.youtube.com/results?search_query=${encodeURIComponent('how to improve ' + gap)}` },
+      { icon: '🎓', label: 'Find free course', url: `https://www.google.com/search?q=free+${q}+course+coursera+OR+google+OR+udemy` },
+      { icon: '📚', label: 'Find a book', url: `https://www.google.com/search?q=best+book+to+learn+${q}` },
+      { icon: '🔗', label: 'LinkedIn Learning', url: `https://www.linkedin.com/learning/search?keywords=${q}` },
+    ]
+  }
+
   if (fetching) return (
     <div style={{ padding: '80px 24px', textAlign: 'center', color: c.textMuted, fontFamily: 'Inter' }}>
       Loading...
@@ -82,7 +94,7 @@ export default function RealityCheck() {
         <>
           {/* Overall score */}
           <div style={{ background: '#1A2118', borderRadius: 20, padding: isMobile ? '20px 16px' : '32px', marginBottom: 16, border: '1px solid rgba(255,255,255,0.06)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 20 : 32, flexDirection: isMobile ? 'row' : 'row' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 20 : 32 }}>
               <div style={{ position: 'relative', width: isMobile ? 80 : 100, height: isMobile ? 80 : 100, flexShrink: 0 }}>
                 <svg width={isMobile ? 80 : 100} height={isMobile ? 80 : 100} viewBox="0 0 100 100">
                   <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
@@ -146,7 +158,7 @@ export default function RealityCheck() {
           </div>
 
           {/* This week action */}
-          <div style={{ background: c.bgCard, borderRadius: 16, padding: isMobile ? '16px' : '24px', marginBottom: 20, border: `1.5px solid ${c.accent}40`, borderLeft: `4px solid ${c.accent}` }}>
+          <div style={{ background: c.bgCard, borderRadius: 16, padding: isMobile ? '16px' : '24px', marginBottom: 16, border: `1.5px solid ${c.accent}40`, borderLeft: `4px solid ${c.accent}` }}>
             <p style={{ fontFamily: 'Inter', fontSize: 10, color: c.accent, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 10px' }}>
               🎯 Do this one thing this week
             </p>
@@ -155,11 +167,38 @@ export default function RealityCheck() {
             </p>
           </div>
 
+          {/* Resources to close the gap */}
+          {data.biggest_gap && (
+            <div style={{ background: c.bgCard, borderRadius: 16, padding: isMobile ? '16px' : '24px', marginBottom: 20, border: `1px solid ${c.border}` }}>
+              <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#722F37', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 6px' }}>
+                🚀 Close your biggest gap right now
+              </p>
+              <p style={{ fontFamily: 'Inter', fontSize: 12, color: c.textMuted, margin: '0 0 14px', lineHeight: 1.5 }}>
+                Real resources to help you improve <strong style={{ color: c.text }}>{data.biggest_gap}</strong> starting today.
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 8 }}>
+                {getResources(data.biggest_gap)?.map((res, i) => (
+                  <a key={i} href={res.url} target="_blank" rel="noopener noreferrer"
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '12px 8px', background: c.bgMid, borderRadius: 12, border: `1px solid ${c.border}`, textDecoration: 'none', transition: 'all 0.15s', textAlign: 'center' }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#722F37'; e.currentTarget.style.background = 'rgba(114,47,55,0.08)' }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.bgMid }}>
+                    <span style={{ fontSize: 22 }}>{res.icon}</span>
+                    <span style={{ fontFamily: 'Inter', fontSize: 11, color: c.text, fontWeight: 500, lineHeight: 1.3 }}>{res.label}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Actions */}
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <button onClick={() => navigate('/simulate')}
               style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 14, background: c.accent, color: '#fff', border: 'none', borderRadius: 99, padding: '12px 24px', cursor: 'pointer', flex: isMobile ? 1 : 'none' }}>
               Talk to your future self →
+            </button>
+            <button onClick={() => navigate('/skills')}
+              style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 14, background: 'transparent', color: c.textMuted, border: `1.5px solid ${c.border}`, borderRadius: 99, padding: '12px 24px', cursor: 'pointer', flex: isMobile ? 1 : 'none' }}>
+              Improve my skills →
             </button>
             <button onClick={generate} disabled={loading}
               style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 14, background: 'transparent', color: c.textMuted, border: `1.5px solid ${c.border}`, borderRadius: 99, padding: '12px 24px', cursor: 'pointer', opacity: loading ? 0.5 : 1, flex: isMobile ? 1 : 'none' }}>
