@@ -21,6 +21,8 @@ import RejectionDecoder from './components/screens/RejectionDecoder'
 import CareerSWOT from './components/screens/CareerSWOT'
 import ResumeIntelligence from './components/screens/ResumeIntelligence'
 import Discover from './components/screens/Discover'
+import FacultyLogin from './components/screens/FacultyLogin'
+import FacultyDashboard from './components/screens/FacultyDashboard'
 
 function RequireAuth({ children }) {
   const { user, loading } = useAuth()
@@ -53,7 +55,11 @@ export default function App() {
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/passport/:userId" element={<Passport />} />
 
-        {/* Protected routes */}
+        {/* Faculty routes — completely separate from student app */}
+        <Route path="/faculty" element={<FacultyLogin />} />
+        <Route path="/faculty/dashboard" element={<FacultyDashboard />} />
+
+        {/* Protected student routes */}
         <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/discover" element={<Discover />} />
