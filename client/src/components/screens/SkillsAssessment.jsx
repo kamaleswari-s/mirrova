@@ -69,10 +69,18 @@ export default function SkillsAssessment() {
     } finally { setAnalyzingGaps(false) }
   }
 
+  // Generate real resource links for a skill
+  const getSkillResources = (skillName) => {
+    const q = encodeURIComponent(skillName)
+    return [
+      { icon: '▶️', label: 'YouTube', url: `https://www.youtube.com/results?search_query=${encodeURIComponent('learn ' + skillName + ' tutorial')}` },
+      { icon: '🎓', label: 'Free course', url: `https://www.google.com/search?q=free+${q}+course+coursera+OR+google+OR+udemy` },
+      { icon: '📚', label: 'Book', url: `https://www.google.com/search?q=best+book+${q}` },
+    ]
+  }
+
   const ratingLabels = ['Never tried', 'Beginner', 'Familiar', 'Confident', 'Expert']
   const ratingColors = ['#8A8A8A', '#722F37', '#FBA002', '#0F9E99', '#38683D']
-
-  // On mobile use short labels
   const mobileRatingLabels = ['Never', 'Beginner', 'OK', 'Good', 'Expert']
 
   const grouped = skills.reduce((acc, skill) => {
@@ -176,6 +184,7 @@ export default function SkillsAssessment() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {categorySkills.map((skill, idx) => {
                       const rating = ratings[skill.skill] || 0
+                      const isLow = rating > 0 && rating <= 2
                       return (
                         <div key={idx} style={{ background: c.bgCard, borderRadius: 12, padding: isMobile ? '12px' : '16px 20px', border: `1px solid ${rating > 0 ? (categoryColors[category] || c.accent) + '40' : c.border}`, transition: 'border 0.2s' }}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
@@ -193,7 +202,7 @@ export default function SkillsAssessment() {
                               </span>
                             )}
                           </div>
-                          <div style={{ display: 'flex', gap: isMobile ? 4 : 6 }}>
+                          <div style={{ display: 'flex', gap: isMobile ? 4 : 6, marginBottom: isLow ? 10 : 0 }}>
                             {(isMobile ? mobileRatingLabels : ratingLabels).map((label, i) => (
                               <button key={i} onClick={() => setRatings(prev => ({ ...prev, [skill.skill]: i + 1 }))}
                                 style={{ flex: 1, padding: isMobile ? '7px 2px' : '8px 4px', borderRadius: 8, border: `1.5px solid ${rating === i + 1 ? ratingColors[i] : c.border}`, background: rating === i + 1 ? `${ratingColors[i]}20` : 'transparent', cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'Inter', fontSize: isMobile ? 9 : 10, color: rating === i + 1 ? ratingColors[i] : c.textMuted, fontWeight: rating === i + 1 ? 700 : 400, textAlign: 'center' }}>
@@ -201,6 +210,26 @@ export default function SkillsAssessment() {
                               </button>
                             ))}
                           </div>
+
+                          {/* Show resources if skill is low */}
+                          {isLow && (
+                            <div style={{ marginTop: 2 }}>
+                              <p style={{ fontFamily: 'Inter', fontSize: 9, color: '#722F37', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px' }}>
+                                Resources to improve this
+                              </p>
+                              <div style={{ display: 'flex', gap: 6 }}>
+                                {getSkillResources(skill.skill).map((res, ri) => (
+                                  <a key={ri} href={res.url} target="_blank" rel="noopener noreferrer"
+                                    style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'Inter', fontSize: 10, color: c.text, fontWeight: 500, background: c.bgMid, padding: '4px 8px', borderRadius: 99, border: `1px solid ${c.border}`, textDecoration: 'none', whiteSpace: 'nowrap' }}
+                                    onMouseEnter={e => e.currentTarget.style.borderColor = '#722F37'}
+                                    onMouseLeave={e => e.currentTarget.style.borderColor = c.border}>
+                                    <span style={{ fontSize: 11 }}>{res.icon}</span>
+                                    {res.label}
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )
                     })}
@@ -221,7 +250,7 @@ export default function SkillsAssessment() {
               </button>
             </div>
 
-            {/* Gap analysis — show BELOW on mobile */}
+            {/* Gap analysis — mobile below */}
             {isMobile && (gapAnalysis || analyzingGaps) && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 24 }}>
                 {analyzingGaps ? (
@@ -248,11 +277,19 @@ export default function SkillsAssessment() {
                     </div>
                     {gapAnalysis.critical_gaps?.length > 0 && (
                       <div style={card()}>
-                        <p style={lbl('#722F37')}>🚨 Critical gaps</p>
+                        <p style={lbl('#722F37')}>🚨 Critical gaps + resources</p>
                         {gapAnalysis.critical_gaps.map((gap, i) => (
-                          <div key={i} style={{ background: 'rgba(114,47,55,0.08)', borderRadius: 10, padding: '10px 12px', border: '1px solid rgba(114,47,55,0.2)', marginBottom: 8 }}>
+                          <div key={i} style={{ background: 'rgba(114,47,55,0.08)', borderRadius: 10, padding: '10px 12px', border: '1px solid rgba(114,47,55,0.2)', marginBottom: 10 }}>
                             <p style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 12, color: '#722F37', margin: '0 0 3px' }}>{gap.skill}</p>
-                            <p style={{ fontFamily: 'Inter', fontSize: 11, color: c.textMuted, margin: 0 }}>⏱ {gap.time_to_learn}</p>
+                            <p style={{ fontFamily: 'Inter', fontSize: 11, color: c.textMuted, margin: '0 0 8px' }}>⏱ {gap.time_to_learn}</p>
+                            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                              {getSkillResources(gap.skill).map((res, ri) => (
+                                <a key={ri} href={res.url} target="_blank" rel="noopener noreferrer"
+                                  style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'Inter', fontSize: 10, color: '#722F37', fontWeight: 600, background: 'rgba(114,47,55,0.1)', padding: '3px 8px', borderRadius: 99, textDecoration: 'none' }}>
+                                  <span>{res.icon}</span> {res.label}
+                                </a>
+                              ))}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -267,7 +304,7 @@ export default function SkillsAssessment() {
             )}
           </div>
 
-          {/* RIGHT — Gap Analysis on desktop only */}
+          {/* RIGHT — desktop gap analysis */}
           {!isMobile && (gapAnalysis || analyzingGaps) && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {analyzingGaps ? (
@@ -292,20 +329,32 @@ export default function SkillsAssessment() {
                       </div>
                     </div>
                   </div>
+
                   {gapAnalysis.critical_gaps?.length > 0 && (
                     <div style={card()}>
-                      <p style={lbl('#722F37')}>🚨 Critical gaps</p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <p style={lbl('#722F37')}>🚨 Critical gaps + resources</p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         {gapAnalysis.critical_gaps.map((gap, i) => (
                           <div key={i} style={{ background: 'rgba(114,47,55,0.08)', borderRadius: 10, padding: '12px 14px', border: '1px solid rgba(114,47,55,0.2)' }}>
                             <p style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 13, color: '#722F37', margin: '0 0 4px' }}>{gap.skill}</p>
-                            <p style={{ fontFamily: 'Inter', fontSize: 12, color: c.textMuted, margin: '0 0 6px', lineHeight: 1.5 }}>{gap.why_matters}</p>
-                            <p style={{ fontFamily: 'Inter', fontSize: 11, color: c.text, margin: 0, fontWeight: 600 }}>⏱ {gap.time_to_learn}</p>
+                            <p style={{ fontFamily: 'Inter', fontSize: 12, color: c.textMuted, margin: '0 0 4px', lineHeight: 1.5 }}>{gap.why_matters}</p>
+                            <p style={{ fontFamily: 'Inter', fontSize: 11, color: c.text, margin: '0 0 10px', fontWeight: 600 }}>⏱ {gap.time_to_learn}</p>
+                            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                              {getSkillResources(gap.skill).map((res, ri) => (
+                                <a key={ri} href={res.url} target="_blank" rel="noopener noreferrer"
+                                  style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'Inter', fontSize: 10, color: '#722F37', fontWeight: 600, background: 'rgba(114,47,55,0.1)', padding: '4px 10px', borderRadius: 99, border: '1px solid rgba(114,47,55,0.2)', textDecoration: 'none', transition: 'all 0.15s' }}
+                                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(114,47,55,0.2)'}
+                                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(114,47,55,0.1)'}>
+                                  <span>{res.icon}</span> {res.label}
+                                </a>
+                              ))}
+                            </div>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
+
                   {gapAnalysis.strengths?.length > 0 && (
                     <div style={card()}>
                       <p style={lbl('#0F9E99')}>💪 Strengths to leverage</p>
@@ -318,21 +367,33 @@ export default function SkillsAssessment() {
                       </div>
                     </div>
                   )}
+
                   {gapAnalysis.learn_in_order?.length > 0 && (
                     <div style={card()}>
                       <p style={lbl('#FBA002')}>📋 Learn in this order</p>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                         {gapAnalysis.learn_in_order.map((item, i) => (
-                          <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                          <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                             <div style={{ width: 24, height: 24, borderRadius: 6, background: 'rgba(251,160,2,0.15)', border: '1.5px solid rgba(251,160,2,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                               <span style={{ fontFamily: 'Inter', fontWeight: 800, fontSize: 11, color: '#FBA002' }}>{i + 1}</span>
                             </div>
-                            <p style={{ fontFamily: 'Inter', fontSize: 13, color: c.text, margin: 0, lineHeight: 1.5, fontWeight: 500 }}>{item}</p>
+                            <div style={{ flex: 1 }}>
+                              <p style={{ fontFamily: 'Inter', fontSize: 13, color: c.text, margin: '0 0 6px', lineHeight: 1.5, fontWeight: 500 }}>{item}</p>
+                              <div style={{ display: 'flex', gap: 6 }}>
+                                {getSkillResources(item).map((res, ri) => (
+                                  <a key={ri} href={res.url} target="_blank" rel="noopener noreferrer"
+                                    style={{ display: 'flex', alignItems: 'center', gap: 3, fontFamily: 'Inter', fontSize: 9, color: '#FBA002', fontWeight: 600, background: 'rgba(251,160,2,0.1)', padding: '3px 8px', borderRadius: 99, textDecoration: 'none' }}>
+                                    <span>{res.icon}</span> {res.label}
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
+
                   <button onClick={() => navigate('/realitycheck')}
                     style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 14, background: c.accent, color: c.accentText, border: 'none', borderRadius: 99, padding: '13px', cursor: 'pointer', width: '100%' }}>
                     Get my Reality Check now →
