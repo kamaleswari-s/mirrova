@@ -2,210 +2,234 @@ const express = require('express');
 const pool = require('../db/pool');
 const authMiddleware = require('../middleware/auth');
 const Groq = require('groq-sdk');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const router = express.Router();
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// POST /api/teacher/create-class
-router.post('/create-class', authMiddleware, async (req, res) => {
-  const { class_name, institution } = req.body;
+// ── FACULTY AUTH ──
+
+// POST /api/teacher/signup
+router.post('/signup', async (req, res) => {
+  const { name, email, password, college_name, invite_code } = req.body;
   try {
-    // Make user a teacher
-    await pool.query('UPDATE users SET role=$1 WHERE id=$2', ['teacher', req.user.id]);
-    
-    // Generate unique class code
-    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-    
+    if (invite_code !== 'MIRROVA2026')
+      return res.status(400).json({ error: 'Invalid invite code. Contact Mirrova to get access.' })
+
+    const existing = await pool.query('SELECT id FROM faculty WHERE email=$1', [email])
+    if (existing.rows.length > 0)
+      return res.status(400).json({ error: 'Email already registered.' })
+
+    const hash = await bcrypt.hash(password, 10)
     const result = await pool.query(
-      `INSERT INTO teacher_classes (teacher_id, class_name, class_code, institution)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [req.user.id, class_name, code, institution]
-    );
-    res.json(result.rows[0]);
+      `INSERT INTO faculty (name, email, password_hash, college_name, invite_code)
+       VALUES ($1, $2, $3, $4, $5) RETURNING id, name, email, college_name`,
+      [name, email, hash, college_name, invite_code]
+    )
+    const faculty = result.rows[0]
+    const token = jwt.sign({ id: faculty.id, role: 'faculty' }, process.env.JWT_SECRET, { expiresIn: '30d' })
+    res.json({ token, faculty })
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    console.error(err)
+    res.status(500).json({ error: 'Server error' })
   }
-});
+})
 
-// GET /api/teacher/classes
-router.get('/classes', authMiddleware, async (req, res) => {
+// POST /api/teacher/login
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
   try {
-    const result = await pool.query(
-      `SELECT tc.*, COUNT(ce.id) as student_count
-       FROM teacher_classes tc
-       LEFT JOIN class_enrollments ce ON ce.class_id = tc.id
-       WHERE tc.teacher_id = $1
-       GROUP BY tc.id
-       ORDER BY tc.created_at DESC`,
-      [req.user.id]
-    );
-    res.json(result.rows);
+    const result = await pool.query('SELECT * FROM faculty WHERE email=$1', [email])
+    if (result.rows.length === 0)
+      return res.status(400).json({ error: 'No faculty account found with this email.' })
+
+    const faculty = result.rows[0]
+    const valid = await bcrypt.compare(password, faculty.password_hash)
+    if (!valid)
+      return res.status(400).json({ error: 'Incorrect password.' })
+
+    const token = jwt.sign({ id: faculty.id, role: 'faculty' }, process.env.JWT_SECRET, { expiresIn: '30d' })
+    res.json({ token, faculty: { id: faculty.id, name: faculty.name, email: faculty.email, college_name: faculty.college_name } })
   } catch (err) {
-    res.status(500).json({ error: 'Server error' });
+    console.error(err)
+    res.status(500).json({ error: 'Server error' })
   }
-});
+})
 
-// GET /api/teacher/class/:id/students
-router.get('/class/:id/students', authMiddleware, async (req, res) => {
+// Faculty auth middleware
+const facultyAuth = async (req, res, next) => {
+  const token = req.headers.authorization?.replace('Bearer ', '')
+  if (!token) return res.status(401).json({ error: 'No token' })
   try {
-    const result = await pool.query(
-      `SELECT u.id, u.name, u.email, u.avatar_initials,
-              p.current_field, p.dream_direction, p.top_skill,
-              p.biggest_fear, p.preferred_language, p.reality_check,
-              p.onboarding_complete,
-              (SELECT COUNT(*) FROM future_selves fs WHERE fs.user_id = u.id) as futures_count,
-              (SELECT COUNT(*) FROM future_selves fs WHERE fs.user_id = u.id AND fs.is_chosen = true) as has_chosen,
-              (SELECT COUNT(*) FROM chat_messages cm WHERE cm.user_id = u.id) as chat_count,
-              sp.month1_theme, sp.month2_theme, sp.month3_theme,
-              (SELECT COUNT(*) FROM sparkplan_tasks st 
-               JOIN spark_plans sp2 ON sp2.id = st.plan_id 
-               WHERE sp2.user_id = u.id AND st.completed = true) as tasks_completed
-       FROM class_enrollments ce
-       JOIN users u ON u.id = ce.student_id
-       LEFT JOIN profiles p ON p.user_id = u.id
-       LEFT JOIN spark_plans sp ON sp.user_id = u.id
-       WHERE ce.class_id = $1`,
-      [req.params.id]
-    );
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    if (decoded.role !== 'faculty') return res.status(403).json({ error: 'Not a faculty account' })
+    req.faculty = decoded
+    next()
+  } catch {
+    res.status(401).json({ error: 'Invalid token' })
   }
-});
-
-// GET /api/teacher/class/:id/insights
-router.get('/class/:id/insights', authMiddleware, async (req, res) => {
-  try {
-    const studentsResult = await pool.query(
-      `SELECT u.name, p.current_field, p.dream_direction, 
-              p.top_skill, p.biggest_fear, p.reality_check
-       FROM class_enrollments ce
-       JOIN users u ON u.id = ce.student_id
-       LEFT JOIN profiles p ON p.user_id = u.id
-       WHERE ce.class_id = $1`,
-      [req.params.id]
-    );
-
-    const students = studentsResult.rows;
-    if (students.length === 0) {
-      return res.json({
-        total_students: 0,
-        insights: null,
-        common_fields: [],
-        common_fears: [],
-        common_dreams: []
-      });
-    }
-
-    // Build aggregate profile
-    const profileSummary = students.map(s => 
-      `${s.name}: studying ${s.current_field || 'unknown'}, dreams of ${s.dream_direction || 'unknown'}, fears ${s.biggest_fear || 'unknown'}`
-    ).join('\n');
-
-    const prompt = `You are an educational AI assistant helping a teacher understand their class.
-
-Here are ${students.length} students in this class:
-${profileSummary}
-
-Generate class-level insights for the teacher. Return a JSON object with:
-{
-  "class_summary": "<2-3 sentence overview of the class>",
-  "top_skill_gaps": ["gap1", "gap2", "gap3"],
-  "common_fears": ["fear1", "fear2"],
-  "intervention_suggestions": ["suggestion1", "suggestion2", "suggestion3"],
-  "at_risk_count": <number of students who seem directionless>,
-  "ready_count": <number who seem career-ready>,
-  "this_week_for_teacher": "<one specific thing the teacher should do this week>"
 }
 
-Return ONLY valid JSON. No markdown.`;
+// GET /api/teacher/me
+router.get('/me', facultyAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, name, email, college_name FROM faculty WHERE id=$1',
+      [req.faculty.id]
+    )
+    res.json(result.rows[0])
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' })
+  }
+})
+
+// ── STUDENT DATA ──
+
+// GET /api/teacher/students — all students from same college
+router.get('/students', facultyAuth, async (req, res) => {
+  try {
+    const faculty = await pool.query('SELECT college_name FROM faculty WHERE id=$1', [req.faculty.id])
+    const college = faculty.rows[0]?.college_name
+
+    const result = await pool.query(
+      `SELECT 
+        u.id, u.name, u.email, u.avatar_initials, u.created_at,
+        p.current_field, p.dream_direction, p.top_skill,
+        p.biggest_fear, p.recent_rejection, p.preferred_language,
+        p.city, p.education_level, p.hours_per_day,
+        p.onboarding_complete, p.college_name,
+        p.reality_check, p.skills_assessment, p.swot,
+        (SELECT COUNT(*) FROM future_selves fs WHERE fs.user_id = u.id) as futures_count,
+        (SELECT COUNT(*) FROM future_selves fs WHERE fs.user_id = u.id AND fs.is_chosen = true) as has_chosen,
+        (SELECT COUNT(*) FROM chat_messages cm WHERE cm.user_id = u.id) as chat_count,
+        (SELECT COUNT(*) FROM sparkplan_tasks st JOIN spark_plans sp ON sp.id = st.plan_id WHERE sp.user_id = u.id AND st.completed = true) as tasks_completed,
+        (SELECT COUNT(*) FROM sparkplan_tasks st JOIN spark_plans sp ON sp.id = st.plan_id WHERE sp.user_id = u.id) as tasks_total
+       FROM users u
+       LEFT JOIN profiles p ON p.user_id = u.id
+       WHERE p.college_name ILIKE $1
+       AND p.onboarding_complete = true
+       ORDER BY u.created_at DESC`,
+      [`%${college}%`]
+    )
+    res.json(result.rows)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Server error' })
+  }
+})
+
+// GET /api/teacher/insights — AI class insights
+router.get('/insights', facultyAuth, async (req, res) => {
+  try {
+    const faculty = await pool.query('SELECT college_name FROM faculty WHERE id=$1', [req.faculty.id])
+    const college = faculty.rows[0]?.college_name
+
+    const studentsResult = await pool.query(
+      `SELECT u.name, p.current_field, p.dream_direction, p.top_skill,
+              p.biggest_fear, p.reality_check, p.skills_assessment
+       FROM users u
+       LEFT JOIN profiles p ON p.user_id = u.id
+       WHERE p.college_name ILIKE $1 AND p.onboarding_complete = true`,
+      [`%${college}%`]
+    )
+
+    const students = studentsResult.rows
+    if (students.length === 0)
+      return res.json({ total: 0, insights: null })
+
+    // Score parsing
+    const scores = students
+      .map(s => s.reality_check?.overall_score)
+      .filter(Boolean)
+
+    const avgScore = scores.length > 0
+      ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+      : null
+
+    const atRisk = students.filter(s =>
+      !s.reality_check || (s.reality_check?.overall_score < 40)
+    ).length
+
+    const noDirection = students.filter(s => !s.dream_direction).length
+    const hasSkills = students.filter(s => s.skills_assessment).length
+
+    // Type distribution
+    const type1 = noDirection
+    const type2 = students.filter(s => s.dream_direction && (!s.reality_check || s.reality_check?.overall_score < 60)).length
+    const type3 = students.filter(s => s.recent_rejection).length
+
+    // AI insights
+    const profileSummary = students.slice(0, 20).map(s =>
+      `${s.name}: ${s.current_field || 'unknown field'} → ${s.dream_direction || 'no direction'}, fears: ${s.biggest_fear || 'unknown'}`
+    ).join('\n')
+
+    const prompt = `You are an educational AI helping a faculty member understand their students' career readiness.
+
+College: ${college}
+Total students: ${students.length}
+Average Reality Check score: ${avgScore || 'not yet assessed'}
+At-risk students (score < 40): ${atRisk}
+Students without career direction: ${noDirection}
+
+Student profiles:
+${profileSummary}
+
+Generate actionable class insights. Return JSON:
+{
+  "class_summary": "<2-3 sentences about the overall class career readiness>",
+  "top_skill_gaps": ["gap1", "gap2", "gap3"],
+  "common_fears": ["fear1", "fear2", "fear3"],
+  "intervention_suggestions": ["specific suggestion 1", "specific suggestion 2", "specific suggestion 3"],
+  "this_week_for_teacher": "<one specific high-impact action the teacher should take this week>",
+  "market_alignment": "<how well this class aligns with current job market demands>"
+}
+
+Return ONLY valid JSON. No markdown.`
 
     const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
       max_tokens: 1000
-    });
+    })
 
-    let insights;
+    let aiInsights
     try {
-      const raw = completion.choices[0].message.content.trim();
-      insights = JSON.parse(raw.replace(/```json|```/g, '').trim());
-    } catch (e) {
-      insights = null;
+      const raw = completion.choices[0].message.content.trim()
+      aiInsights = JSON.parse(raw.replace(/```json|```/g, '').trim())
+    } catch {
+      aiInsights = null
     }
 
-    // Aggregate common fields and dreams
-    const fields = {};
-    const dreams = {};
-    students.forEach(s => {
-      if (s.current_field) fields[s.current_field] = (fields[s.current_field] || 0) + 1;
-      if (s.dream_direction) dreams[s.dream_direction] = (dreams[s.dream_direction] || 0) + 1;
-    });
-
     res.json({
-      total_students: students.length,
-      insights,
-      common_fields: Object.entries(fields).sort((a,b) => b[1]-a[1]).slice(0,5),
-      common_dreams: Object.entries(dreams).sort((a,b) => b[1]-a[1]).slice(0,5),
-    });
+      total: students.length,
+      avg_score: avgScore,
+      at_risk: atRisk,
+      no_direction: noDirection,
+      has_skills: hasSkills,
+      type1, type2, type3,
+      insights: aiInsights
+    })
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    console.error(err)
+    res.status(500).json({ error: 'Server error' })
   }
-});
+})
 
-// POST /api/teacher/join-class (for students)
-router.post('/join-class', authMiddleware, async (req, res) => {
-  const { class_code } = req.body;
+// ── STUDENT ONBOARDING — save college name ──
+// POST /api/teacher/link-faculty — student links their faculty email
+router.post('/link-faculty', authMiddleware, async (req, res) => {
+  const { faculty_email, college_name } = req.body
   try {
-    const classResult = await pool.query(
-      'SELECT * FROM teacher_classes WHERE class_code=$1',
-      [class_code.toUpperCase()]
-    );
-    if (classResult.rows.length === 0)
-      return res.status(404).json({ error: 'Class not found. Check the code and try again.' });
-
-    const cls = classResult.rows[0];
-
-    // Check already enrolled
-    const existing = await pool.query(
-      'SELECT id FROM class_enrollments WHERE class_id=$1 AND student_id=$2',
-      [cls.id, req.user.id]
-    );
-    if (existing.rows.length > 0)
-      return res.status(400).json({ error: 'Already enrolled in this class.' });
-
     await pool.query(
-      'INSERT INTO class_enrollments (class_id, student_id) VALUES ($1, $2)',
-      [cls.id, req.user.id]
-    );
-
-    res.json({ success: true, class_name: cls.class_name, institution: cls.institution });
+      `UPDATE profiles SET faculty_email=$1, college_name=$2 WHERE user_id=$3`,
+      [faculty_email, college_name, req.user.id]
+    )
+    res.json({ success: true })
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Server error' })
   }
-});
-
-// GET /api/teacher/my-classes (for students - classes they joined)
-router.get('/my-classes', authMiddleware, async (req, res) => {
-  try {
-    const result = await pool.query(
-      `SELECT tc.class_name, tc.class_code, tc.institution,
-              u.name as teacher_name
-       FROM class_enrollments ce
-       JOIN teacher_classes tc ON tc.id = ce.class_id
-       JOIN users u ON u.id = tc.teacher_id
-       WHERE ce.student_id = $1`,
-      [req.user.id]
-    );
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+})
 
 module.exports = router;
