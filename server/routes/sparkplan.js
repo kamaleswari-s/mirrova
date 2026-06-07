@@ -6,6 +6,31 @@ const authMiddleware = require('../middleware/auth');
 const router = express.Router();
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+// Helper — generate real working resource links from search queries
+const generateResources = (task, targetRole) => {
+  const query = encodeURIComponent(`${task.title} ${targetRole}`)
+  const bookQuery = encodeURIComponent(`best book to learn ${task.title}`)
+  const certQuery = encodeURIComponent(`free certification ${task.title} coursera OR udemy OR google`)
+
+  return {
+    youtube: {
+      label: 'Watch on YouTube',
+      url: `https://www.youtube.com/results?search_query=${query}`,
+      icon: '▶️'
+    },
+    google: {
+      label: 'Find free courses',
+      url: `https://www.google.com/search?q=${certQuery}`,
+      icon: '🎓'
+    },
+    book: {
+      label: 'Find a book',
+      url: `https://www.google.com/search?q=${bookQuery}`,
+      icon: '📚'
+    }
+  }
+}
+
 // POST /api/sparkplan/generate
 router.post('/generate', authMiddleware, async (req, res) => {
   try {
@@ -22,7 +47,6 @@ router.post('/generate', authMiddleware, async (req, res) => {
     );
     const data = dataResult.rows[0];
 
-    // Extract skills gap data
     let gapData = null
     let criticalGaps = []
     let resumeScore = null
@@ -48,7 +72,6 @@ router.post('/generate', authMiddleware, async (req, res) => {
 
     const hoursPerDay = data.hours_per_day || '1-2 hours'
     const targetRole = data.job_title || data.dream_direction || 'target role'
-    const language = 'English'
 
     const prompt = `Create a highly personalized 90-day Spark Plan for this student.
 
@@ -71,20 +94,24 @@ IMPORTANT PERSONALIZATION RULES:
 - Tasks should reference their specific target role: ${targetRole}
 - Month themes must reflect their actual journey
 - Each task must feel like it was written specifically for THIS student
+- For each task, provide a specific YouTube search query and a specific free resource search query that would help complete this task
 
 Return ONLY valid JSON:
 {
-  "month1_theme": "<theme based on their biggest gap in ${language}>",
-  "month2_theme": "<theme for building proof in ${language}>",
-  "month3_theme": "<theme for getting visible in ${language}>",
+  "month1_theme": "<theme based on their biggest gap>",
+  "month2_theme": "<theme for building proof>",
+  "month3_theme": "<theme for getting visible>",
   "tasks": [
     {
       "week": 1,
       "month": 1,
-      "title": "<specific task title mentioning their gap/role>",
-      "description": "<exact action to take, personalized to their situation>",
-      "duration": "<realistic time for ${hoursPerDay} per day>",
+      "title": "<specific task title>",
+      "description": "<exact action to take, personalized>",
+      "duration": "<realistic time>",
       "why": "<one line: why this matters for becoming ${targetRole}>",
+      "youtube_query": "<specific 4-6 word YouTube search query to learn this skill e.g. 'python for data analysis beginners'>",
+      "resource_query": "<specific search query to find free course or certification e.g. 'free python certification google coursera'>",
+      "book_query": "<specific search query to find best book e.g. 'best book learn python data science'>",
       "completed": false
     }
   ]
@@ -98,7 +125,7 @@ Return ONLY the JSON. No markdown.`
       model: 'llama-3.3-70b-versatile',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.8,
-      max_tokens: 3500
+      max_tokens: 4000
     });
 
     let plan;
@@ -109,9 +136,29 @@ Return ONLY the JSON. No markdown.`
       return res.status(500).json({ error: 'Parse error' });
     }
 
-    // Delete old plan and insert new one
-    await pool.query('DELETE FROM spark_plans WHERE user_id=$1', [req.user.id]);
+    // Add real working resource links to each task
+    plan.tasks = plan.tasks.map(task => ({
+      ...task,
+      resources: {
+        youtube: {
+          label: 'Watch on YouTube',
+          url: `https://www.youtube.com/results?search_query=${encodeURIComponent(task.youtube_query || task.title + ' ' + targetRole)}`,
+          icon: '▶️'
+        },
+        course: {
+          label: 'Find free course',
+          url: `https://www.google.com/search?q=${encodeURIComponent(task.resource_query || 'free course ' + task.title)}`,
+          icon: '🎓'
+        },
+        book: {
+          label: 'Find a book',
+          url: `https://www.google.com/search?q=${encodeURIComponent(task.book_query || 'best book ' + task.title)}`,
+          icon: '📚'
+        }
+      }
+    }))
 
+    await pool.query('DELETE FROM spark_plans WHERE user_id=$1', [req.user.id]);
     await pool.query(
       `INSERT INTO spark_plans (user_id, future_self_id, month1_theme, month2_theme, month3_theme, tasks)
        VALUES ($1,$2,$3,$4,$5,$6)`,

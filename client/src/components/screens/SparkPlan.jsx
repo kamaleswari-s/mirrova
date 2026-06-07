@@ -9,6 +9,7 @@ export default function SparkPlan() {
   const [plan, setPlan] = useState(null)
   const [loading, setLoading] = useState(false)
   const [checkinDone, setCheckinDone] = useState(false)
+  const [expandedTask, setExpandedTask] = useState(null)
 
   useEffect(() => {
     axios.get('/api/sparkplan').then(r => setPlan(r.data)).catch(() => {})
@@ -107,8 +108,8 @@ export default function SparkPlan() {
             </div>
           )}
 
-          {/* Plan — stack on mobile, 3 cols on desktop */}
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? 16 : 16 }}>
+          {/* Plan */}
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 16 }}>
             {months.map(m => (
               <div key={m.num} style={{ borderRadius: 16, overflow: 'hidden', border: `1px solid ${colors.border}` }}>
                 {/* Month header */}
@@ -135,29 +136,77 @@ export default function SparkPlan() {
                           {weekDone}/{wTasks.length}
                         </span>
                       </div>
-                      {wTasks.map((task, ti) => (
-                        <div key={ti} onClick={() => toggleTask(weekNum, ti, task.completed)}
-                          style={{ display: 'flex', gap: 10, padding: '10px 14px', cursor: 'pointer', borderTop: `1px solid ${colors.border}`, background: task.completed ? `${monthColors[m.num]}08` : 'transparent', transition: 'background 0.15s' }}>
-                          <div style={{ width: 18, height: 18, borderRadius: 4, border: `1.5px solid ${task.completed ? monthColors[m.num] : colors.border}`, background: task.completed ? monthColors[m.num] : 'transparent', flexShrink: 0, marginTop: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 11, fontWeight: 700 }}>
-                            {task.completed ? '✓' : ''}
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: 12, color: task.completed ? colors.textMuted : colors.text, margin: '0 0 2px', textDecoration: task.completed ? 'line-through' : 'none', lineHeight: 1.4 }}>
-                              {task.title}
-                            </p>
-                            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                              <p style={{ fontFamily: 'Inter', fontSize: 10, color: colors.textMuted, margin: 0 }}>
-                                {task.duration}
-                              </p>
-                              {task.why && (
-                                <p style={{ fontFamily: 'Inter', fontSize: 10, color: monthColors[m.num], margin: 0, fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 150 }}>
-                                  {task.why}
+                      {wTasks.map((task, ti) => {
+                        const taskKey = `${weekNum}-${ti}`
+                        const isExpanded = expandedTask === taskKey
+                        return (
+                          <div key={ti} style={{ borderTop: `1px solid ${colors.border}`, background: task.completed ? `${monthColors[m.num]}08` : 'transparent', transition: 'background 0.15s' }}>
+                            {/* Task row */}
+                            <div style={{ display: 'flex', gap: 10, padding: '10px 14px', cursor: 'pointer' }}
+                              onClick={() => setExpandedTask(isExpanded ? null : taskKey)}>
+                              <div
+                                onClick={e => { e.stopPropagation(); toggleTask(weekNum, ti, task.completed) }}
+                                style={{ width: 18, height: 18, borderRadius: 4, border: `1.5px solid ${task.completed ? monthColors[m.num] : colors.border}`, background: task.completed ? monthColors[m.num] : 'transparent', flexShrink: 0, marginTop: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 11, fontWeight: 700 }}>
+                                {task.completed ? '✓' : ''}
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <p style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: 12, color: task.completed ? colors.textMuted : colors.text, margin: '0 0 2px', textDecoration: task.completed ? 'line-through' : 'none', lineHeight: 1.4 }}>
+                                  {task.title}
                                 </p>
-                              )}
+                                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                                  <p style={{ fontFamily: 'Inter', fontSize: 10, color: colors.textMuted, margin: 0 }}>
+                                    {task.duration}
+                                  </p>
+                                  {task.resources && (
+                                    <span style={{ fontFamily: 'Inter', fontSize: 9, color: monthColors[m.num], fontWeight: 600, background: `${monthColors[m.num]}15`, padding: '1px 6px', borderRadius: 99 }}>
+                                      resources ↓
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <span style={{ fontSize: 10, color: colors.textMuted, flexShrink: 0, marginTop: 3 }}>
+                                {isExpanded ? '▲' : '▼'}
+                              </span>
                             </div>
+
+                            {/* Expanded — why + resources */}
+                            {isExpanded && (
+                              <div style={{ padding: '0 14px 14px 42px' }}>
+                                {task.why && (
+                                  <p style={{ fontFamily: 'Inter', fontSize: 11, color: monthColors[m.num], margin: '0 0 10px', fontStyle: 'italic', lineHeight: 1.5 }}>
+                                    {task.why}
+                                  </p>
+                                )}
+                                {task.description && (
+                                  <p style={{ fontFamily: 'Inter', fontSize: 11, color: colors.textMuted, margin: '0 0 12px', lineHeight: 1.6 }}>
+                                    {task.description}
+                                  </p>
+                                )}
+                                {task.resources && (
+                                  <div>
+                                    <p style={{ fontFamily: 'Inter', fontSize: 9, color: colors.textMuted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 6px' }}>
+                                      Resources to upskill
+                                    </p>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                                      {Object.values(task.resources).map((res, ri) => (
+                                        <a key={ri} href={res.url} target="_blank" rel="noopener noreferrer"
+                                          onClick={e => e.stopPropagation()}
+                                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', background: colors.bgMid, borderRadius: 8, border: `1px solid ${colors.border}`, textDecoration: 'none', transition: 'all 0.15s' }}
+                                          onMouseEnter={e => e.currentTarget.style.borderColor = monthColors[m.num]}
+                                          onMouseLeave={e => e.currentTarget.style.borderColor = colors.border}>
+                                          <span style={{ fontSize: 14 }}>{res.icon}</span>
+                                          <span style={{ fontFamily: 'Inter', fontSize: 11, color: colors.text, fontWeight: 500 }}>{res.label}</span>
+                                          <span style={{ fontFamily: 'Inter', fontSize: 10, color: colors.textMuted, marginLeft: 'auto' }}>→</span>
+                                        </a>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   )
                 })}
