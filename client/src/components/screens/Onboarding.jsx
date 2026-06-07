@@ -27,6 +27,7 @@ const getQuestions = (lang) => {
       { key: 'hours_per_day', q: "How many hours per day can you realistically commit to upskilling?", ph: "e.g. 1 hour on weekdays, 3 hours on weekends..." },
       { key: 'built_anything', q: "Have you ever built anything — project, app, business, event?", ph: "e.g. Built a small e-commerce site, organised a college fest..." },
       { key: 'biggest_blocker', q: "What's the single biggest thing blocking you right now — be completely honest.", ph: "e.g. I don't know where to start, my parents want govt jobs..." },
+      { key: 'college_name', q: "What's the name of your college or institution?", ph: "e.g. Anna University, Sri Venkateswara College, IIT Madras..." },
     ],
     Hindi: [
       { key: 'current_field', q: "आप अभी क्या पढ़ रहे हैं या काम कर रहे हैं?", ph: "जैसे: Computer Science, B.Com..." },
@@ -40,6 +41,7 @@ const getQuestions = (lang) => {
       { key: 'hours_per_day', q: "आप प्रतिदिन कितने घंटे upskilling के लिए दे सकते हैं?", ph: "जैसे: 1-2 घंटे..." },
       { key: 'built_anything', q: "क्या आपने कभी कुछ बनाया है?", ph: "जैसे: website, college fest..." },
       { key: 'biggest_blocker', q: "अभी आपको सबसे ज़्यादा क्या रोक रहा है?", ph: "जैसे: शुरू कहाँ से करूं समझ नहीं आता..." },
+      { key: 'college_name', q: "आपके college का नाम क्या है?", ph: "जैसे: Delhi University, IIT Delhi..." },
     ],
     Tamil: [
       { key: 'current_field', q: "நீங்கள் இப்போது என்ன படிக்கிறீர்கள்?", ph: "எ.கா: Computer Science, B.Com..." },
@@ -53,6 +55,7 @@ const getQuestions = (lang) => {
       { key: 'hours_per_day', q: "நீங்கள் ஒரு நாளில் எத்தனை மணி நேரம் ஒதுக்க முடியும்?", ph: "எ.கா: 1-2 மணி நேரம்..." },
       { key: 'built_anything', q: "நீங்கள் எப்போதாவது ஏதாவது உருவாக்கினீர்களா?", ph: "எ.கா: website, college fest..." },
       { key: 'biggest_blocker', q: "இப்போது உங்களை மிகவும் தடுப்பது என்ன?", ph: "எ.கா: எங்கிருந்து தொடங்குவது தெரியவில்லை..." },
+      { key: 'college_name', q: "உங்கள் கல்லூரியின் பெயர் என்ன?", ph: "எ.கா: Anna University, PSG College..." },
     ],
     Telugu: [
       { key: 'current_field', q: "మీరు ప్రస్తుతం ఏమి చదువుతున్నారు?", ph: "ఉదా: Computer Science, B.Com..." },
@@ -66,6 +69,7 @@ const getQuestions = (lang) => {
       { key: 'hours_per_day', q: "రోజుకు ఎన్ని గంటలు upskilling కి కేటాయించగలరు?", ph: "ఉదా: 1-2 గంటలు..." },
       { key: 'built_anything', q: "మీరు ఏదైనా నిర్మించారా?", ph: "ఉదా: website, event..." },
       { key: 'biggest_blocker', q: "ఇప్పుడు మిమ్మల్ని ఆపుతున్నది ఏమిటి?", ph: "ఉదా: ఎక్కడ నుండి మొదలుపెట్టాలో తెలియదు..." },
+      { key: 'college_name', q: "మీ కళాశాల పేరు ఏమిటి?", ph: "ఉదా: Osmania University, JNTU..." },
     ],
     Kannada: [
       { key: 'current_field', q: "ನೀವು ಈಗ ಏನು ಓದುತ್ತಿದ್ದೀರಿ?", ph: "ಉದಾ: Computer Science, B.Com..." },
@@ -79,6 +83,7 @@ const getQuestions = (lang) => {
       { key: 'hours_per_day', q: "ದಿನಕ್ಕೆ ಎಷ್ಟು ಗಂಟೆ upskilling ಗೆ ಮೀಸಲಿಡಬಹುದು?", ph: "ಉದಾ: 1-2 ಗಂಟೆ..." },
       { key: 'built_anything', q: "ನೀವು ಏನಾದರೂ ನಿರ್ಮಿಸಿದ್ದೀರಾ?", ph: "ಉದಾ: website, event..." },
       { key: 'biggest_blocker', q: "ಈಗ ನಿಮ್ಮನ್ನು ಅತ್ಯಂತ ತಡೆಯುತ್ತಿರುವುದು?", ph: "ಉದಾ: ಎಲ್ಲಿಂದ ಪ್ರಾರಂಭಿಸಬೇಕೆಂದು ತಿಳಿಯುತ್ತಿಲ್ಲ..." },
+      { key: 'college_name', q: "ನಿಮ್ಮ ಕಾಲೇಜಿನ ಹೆಸರು ಏನು?", ph: "ಉದಾ: Bangalore University, VTU..." },
     ],
     Bengali: [
       { key: 'current_field', q: "আপনি এখন কী পড়ছেন?", ph: "যেমন: Computer Science, B.Com..." },
@@ -92,23 +97,24 @@ const getQuestions = (lang) => {
       { key: 'hours_per_day', q: "প্রতিদিন কত ঘণ্টা upskilling-এ দিতে পারবেন?", ph: "যেমন: 1-2 ঘণ্টা..." },
       { key: 'built_anything', q: "কি কখনো কিছু তৈরি করেছেন?", ph: "যেমন: website, event..." },
       { key: 'biggest_blocker', q: "এখন সবচেয়ে বেশি কী আটকাচ্ছে?", ph: "যেমন: কোথা থেকে শুরু করব বুঝতে পারছি না..." },
+      { key: 'college_name', q: "আপনার কলেজের নাম কী?", ph: "যেমন: Calcutta University, Jadavpur..." },
     ],
   }
   return q[lang] || q['English']
 }
 
 export default function Onboarding() {
-  const [phase, setPhase] = useState('language') // language → mode → questions/heartdump/voice → align → theme
+  const [phase, setPhase] = useState('language')
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState({})
   const [current, setCurrent] = useState('')
   const [selectedTheme, setSelectedTheme] = useState('ivory')
   const [selectedLanguage, setSelectedLanguage] = useState('English')
-  const [selectedMode, setSelectedMode] = useState('') // structured, heartdump, voice
+  const [selectedMode, setSelectedMode] = useState('')
   const [loading, setLoading] = useState(false)
   const [heartDump, setHeartDump] = useState('')
   const [extracting, setExtracting] = useState(false)
-  const [extracted, setExtracted] = useState(null) // extracted profile from heartdump/voice
+  const [extracted, setExtracted] = useState(null)
   const [isListening, setIsListening] = useState(false)
   const [transcript, setTranscript] = useState('')
   const recognitionRef = useRef(null)
@@ -177,7 +183,8 @@ export default function Onboarding() {
     try {
       await axios.post('/api/onboarding/save', {
         ...profileData,
-        preferred_language: selectedLanguage
+        preferred_language: selectedLanguage,
+        college_name: profileData.college_name || answers.college_name || ''
       })
       await axios.patch('/api/auth/theme', { theme: selectedTheme })
       updateUser({ theme: selectedTheme, onboarding_complete: true, preferred_language: selectedLanguage })
@@ -231,27 +238,9 @@ export default function Onboarding() {
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 32 }}>
           {[
-            {
-              key: 'structured',
-              icon: '📋',
-              title: 'Answer questions one by one',
-              desc: '11 guided questions about your career, goals and fears. Takes about 5 minutes.',
-              color: '#0F9E99'
-            },
-            {
-              key: 'heartdump',
-              icon: '💬',
-              title: 'Just tell me everything',
-              desc: 'Type freely like you\'re talking to someone you trust. Tell us your story, worries, dreams — anything. Mirrova will figure out the rest.',
-              color: '#FBA002'
-            },
-            {
-              key: 'voice',
-              icon: '🎤',
-              title: 'Speak in your language',
-              desc: `Tap the mic and talk in ${langNative}. Say whatever is on your mind. Mirrova listens and understands.`,
-              color: '#615091'
-            },
+            { key: 'structured', icon: '📋', title: 'Answer questions one by one', desc: '12 guided questions about your career, goals and fears. Takes about 5 minutes.', color: '#0F9E99' },
+            { key: 'heartdump', icon: '💬', title: 'Just tell me everything', desc: "Type freely like you're talking to someone you trust. Tell us your story, worries, dreams — anything. Mirrova will figure out the rest.", color: '#FBA002' },
+            { key: 'voice', icon: '🎤', title: 'Speak in your language', desc: `Tap the mic and talk in ${langNative}. Say whatever is on your mind. Mirrova listens and understands.`, color: '#615091' },
           ].map(mode => (
             <button key={mode.key} onClick={() => { setSelectedMode(mode.key); setPhase(mode.key === 'structured' ? 'questions' : mode.key) }}
               style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: '20px 24px', background: selectedMode === mode.key ? `${mode.color}15` : 'rgba(255,255,255,0.04)', border: `1.5px solid ${selectedMode === mode.key ? mode.color : 'rgba(255,255,255,0.08)'}`, borderRadius: 16, cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s' }}>
@@ -324,8 +313,6 @@ export default function Onboarding() {
         <p style={{ fontFamily: 'Inter', fontSize: 14, color: '#7A6E58', marginBottom: 40, lineHeight: 1.7, fontWeight: 500, maxWidth: 460, margin: '0 auto 40px' }}>
           Tap the mic and talk. Tell Mirrova about yourself — your college, dreams, fears, what's blocking you. Speak naturally in {langNative}.
         </p>
-
-        {/* Mic button */}
         <div style={{ marginBottom: 32 }}>
           <button onClick={isListening ? stopVoice : startVoice}
             style={{ width: 100, height: 100, borderRadius: '50%', background: isListening ? '#722F37' : '#0F9E99', border: 'none', cursor: 'pointer', fontSize: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', boxShadow: isListening ? '0 0 0 16px rgba(114,47,55,0.2)' : '0 0 0 8px rgba(15,158,153,0.15)', transition: 'all 0.3s' }}>
@@ -335,15 +322,12 @@ export default function Onboarding() {
             {isListening ? 'Listening... tap to stop' : 'Tap to start speaking'}
           </p>
         </div>
-
-        {/* Transcript */}
         {transcript && (
           <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: '20px', marginBottom: 24, border: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>
             <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#0F9E99', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>What Mirrova heard</p>
             <p style={{ fontFamily: 'Inter', fontSize: 14, color: '#F2E8D1', margin: 0, lineHeight: 1.7 }}>{transcript}</p>
           </div>
         )}
-
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
           <button onClick={() => setPhase('mode')}
             style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 14, background: 'transparent', color: '#7A6E58', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 99, padding: '12px 24px', cursor: 'pointer' }}>
@@ -371,8 +355,6 @@ export default function Onboarding() {
         <p style={{ fontFamily: 'Inter', fontSize: 14, color: '#7A6E58', marginBottom: 24, lineHeight: 1.6, fontWeight: 500 }}>
           Check if this is right. If something is wrong or missing, you can edit it below.
         </p>
-
-        {/* Summary */}
         <div style={{ background: 'rgba(15,158,153,0.08)', borderRadius: 16, padding: '20px 24px', marginBottom: 20, border: '1px solid rgba(15,158,153,0.2)' }}>
           <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#0F9E99', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>Mirrova's understanding</p>
           <p style={{ fontFamily: 'Inter', fontSize: 15, color: '#F2E8D1', margin: '0 0 8px', lineHeight: 1.6, fontStyle: 'italic' }}>"{extracted.summary}"</p>
@@ -383,8 +365,6 @@ export default function Onboarding() {
             <span style={{ fontFamily: 'Inter', fontSize: 11, color: '#0F9E99', fontWeight: 700 }}>{extracted.confidence || 70}% confident</span>
           </div>
         </div>
-
-        {/* Editable fields */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
           {[
             { key: 'current_field', label: 'Currently studying/working in' },
@@ -395,6 +375,7 @@ export default function Onboarding() {
             { key: 'education_level', label: 'Education' },
             { key: 'hours_per_day', label: 'Hours per day' },
             { key: 'biggest_blocker', label: 'Biggest blocker' },
+            { key: 'college_name', label: 'College name' },
           ].map(field => (
             <div key={field.key} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: '10px 16px', border: '1px solid rgba(255,255,255,0.06)' }}>
               <span style={{ fontFamily: 'Inter', fontSize: 11, color: '#7A6E58', fontWeight: 600, width: 160, flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{field.label}</span>
@@ -407,7 +388,6 @@ export default function Onboarding() {
             </div>
           ))}
         </div>
-
         <div style={{ display: 'flex', gap: 12 }}>
           <button onClick={() => setPhase(selectedMode)}
             style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 14, background: 'transparent', color: '#7A6E58', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 99, padding: '12px 24px', cursor: 'pointer' }}>
@@ -458,7 +438,6 @@ export default function Onboarding() {
           {step + 1} / {questions.length}
         </p>
       </div>
-
       <div style={{ padding: '16px 48px 0' }}>
         <div style={{ display: 'flex', gap: 6 }}>
           {questions.map((_, i) => (
@@ -466,7 +445,6 @@ export default function Onboarding() {
           ))}
         </div>
       </div>
-
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 48px' }}>
         <div style={{ maxWidth: 620, width: '100%' }}>
           <div style={{ marginBottom: 32 }}>
@@ -477,8 +455,6 @@ export default function Onboarding() {
               {q.q}
             </h2>
           </div>
-
-          {/* Previous answers */}
           {Object.entries(answers).length > 0 && (
             <div style={{ marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
               {Object.entries(answers).slice(-2).map(([key, val]) => (
@@ -490,8 +466,6 @@ export default function Onboarding() {
               ))}
             </div>
           )}
-
-          {/* Mirrova question bubble */}
           <div style={{ display: 'flex', gap: 12, marginBottom: 20, alignItems: 'flex-start' }}>
             <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#1A2118', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span style={{ fontFamily: 'Moldie, serif', fontSize: 14, color: '#F2E8D1' }}>m</span>
@@ -500,7 +474,6 @@ export default function Onboarding() {
               {q.q}
             </div>
           </div>
-
           <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
             <textarea
               value={current}
@@ -518,7 +491,6 @@ export default function Onboarding() {
               {step === questions.length - 1 ? 'Done →' : 'Next →'}
             </button>
           </div>
-
           {(q.key === 'recent_rejection' || q.key === 'built_anything') && (
             <button onClick={handleNext}
               style={{ fontFamily: 'Inter', fontStyle: 'italic', fontSize: 13, color: '#8A8A8A', background: 'none', border: 'none', cursor: 'pointer', marginTop: 12, display: 'block', fontWeight: 500 }}>
