@@ -164,7 +164,6 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Top 3 featured tools */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, marginBottom: 2 }}>
             {[
               { num: '01', title: 'Future Self Simulator', desc: "Chat with 3 AI versions of yourself, 5 years from now. Each has lived a different path. Ask them anything — in Tamil, Hindi, Telugu, Kannada, Bengali or English.", accent: '#0F9E99' },
@@ -184,7 +183,6 @@ export default function Landing() {
             ))}
           </div>
 
-          {/* Row 2 — 4 tools */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2, marginBottom: 2 }}>
             {[
               { title: 'Career SWOT', desc: 'Strengths, weaknesses, opportunities and threats — with a full actionable report.', accent: '#0F9E99' },
@@ -200,7 +198,6 @@ export default function Landing() {
             ))}
           </div>
 
-          {/* Row 3 — 3 tools */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, marginBottom: 2 }}>
             {[
               { title: 'Skills Assessment', desc: 'Rate yourself on key skills for your target role. See your gaps and what to learn first.', accent: '#0F9E99' },
@@ -215,7 +212,6 @@ export default function Landing() {
             ))}
           </div>
 
-          {/* Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0, marginTop: 2, borderTop: '0.5px solid rgba(255,255,255,0.06)' }}>
             {[
               { val: '3', label: 'Ways to tell us your story — questions, voice or free text' },
@@ -260,6 +256,45 @@ export default function Landing() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── EDUCATOR SECTION ── */}
+      <div style={{ background: '#F5F0E8', padding: '48px', borderTop: '1px solid rgba(26,33,24,0.08)' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr auto', gap: 32, alignItems: 'center' }}>
+          <div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(26,33,24,0.06)', borderRadius: 99, padding: '4px 12px', marginBottom: 12 }}>
+              <span style={{ fontFamily: 'Inter', fontSize: 10, color: '#1A2118', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>For Educators</span>
+            </div>
+            <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 24, color: '#1A2118', margin: '0 0 8px', lineHeight: 1.2 }}>
+              Are you a faculty member or career counselor?
+            </p>
+            <p style={{ fontFamily: 'Inter', fontSize: 15, color: '#5A5A5A', margin: 0, lineHeight: 1.7 }}>
+              Track your students' career readiness in real time. See who's at risk, what skill gaps your class has, and get AI-powered intervention suggestions — before placement season hits.
+            </p>
+            <div style={{ display: 'flex', gap: 20, marginTop: 16, flexWrap: 'wrap' }}>
+              {[
+                { icon: '🚨', label: 'At-risk flagging' },
+                { icon: '📊', label: 'Skill gap heatmaps' },
+                { icon: '🧠', label: 'AI class insights' },
+                { icon: '👤', label: 'Individual student views' },
+              ].map(f => (
+                <div key={f.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 16 }}>{f.icon}</span>
+                  <span style={{ fontFamily: 'Inter', fontSize: 13, color: '#5A5A5A', fontWeight: 500 }}>{f.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-end', flexShrink: 0 }}>
+            <button onClick={() => navigate('/faculty')}
+              style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 14, background: '#1A2118', color: '#F2E8D1', border: 'none', borderRadius: 99, padding: '13px 28px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              Mirrova for Educators →
+            </button>
+            <p style={{ fontFamily: 'Inter', fontSize: 11, color: '#8A8A8A', margin: 0, textAlign: 'right' }}>
+              Invite-only · Free for institutions
+            </p>
           </div>
         </div>
       </div>
