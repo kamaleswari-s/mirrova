@@ -1,0 +1,37 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#0E1512"/>
+  
+  <!-- Subtle circles -->
+  <circle cx="600" cy="315" r="400" stroke="#0F9E99" stroke-width="0.5" opacity="0.15"/>
+  <circle cx="600" cy="315" r="280" stroke="#0F9E99" stroke-width="0.5" opacity="0.1"/>
+  <circle cx="600" cy="315" r="160" stroke="#0F9E99" stroke-width="0.5" opacity="0.08"/>
+
+  <!-- Logo icon -->
+  <circle cx="600" cy="180" r="48" stroke="#0F9E99" stroke-width="2" fill="none"/>
+  <path d="M576 180 Q600 156 624 180" stroke="#0F9E99" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M576 180 Q600 204 624 180" stroke="#615091" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <circle cx="600" cy="180" r="5" fill="#0F9E99"/>
+  <circle cx="600" cy="134" r="4" fill="#FBA002"/>
+
+  <!-- mirrova wordmark -->
+  <text x="600" y="290" font-family="Georgia, serif" font-size="72" font-weight="bold" fill="#F2E8D1" text-anchor="middle" letter-spacing="-2">mirrova</text>
+
+  <!-- Tagline -->
+  <text x="600" y="350" font-family="Georgia, serif" font-size="28" font-style="italic" fill="#0F9E99" text-anchor="middle">See who you're becoming.</text>
+
+  <!-- Divider -->
+  <line x1="480" y1="385" x2="720" y2="385" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+
+  <!-- Features row -->
+  <text x="280" y="430" font-family="Arial, sans-serif" font-size="18" fill="#7A6E58" text-anchor="middle">Future Self Simulator</text>
+  <text x="600" y="430" font-family="Arial, sans-serif" font-size="18" fill="#7A6E58" text-anchor="middle">Resume Intelligence</text>
+  <text x="920" y="430" font-family="Arial, sans-serif" font-size="18" fill="#7A6E58" text-anchor="middle">Reality Check</text>
+
+  <!-- URL -->
+  <text x="600" y="520" font-family="Arial, sans-serif" font-size="22" fill="rgba(255,255,255,0.3)" text-anchor="middle">mymirrova.vercel.app</text>
+
+  <!-- Bottom badge -->
+  <rect x="460" y="550" width="280" height="36" rx="18" fill="rgba(15,158,153,0.15)" stroke="rgba(15,158,153,0.3)" stroke-width="1"/>
+  <text x="600" y="573" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#0F9E99" text-anchor="middle" letter-spacing="2">FREE · AI-POWERED · 6 LANGUAGES</text>
+</svg>
