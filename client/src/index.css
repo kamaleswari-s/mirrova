@@ -1,11 +1,11 @@
+@import "tailwindcss";
+
 @font-face {
   font-family: 'Moldie';
   src: url('/fonts/MoldieDemoRegular-4nGxl.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
 }
-
-@import "tailwindcss";
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -81,16 +81,13 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }
 
-/* ── MOBILE RESPONSIVE ── */
 @media (max-width: 768px) {
   aside {
     display: none !important;
   }
-
   .mobile-nav {
     display: flex !important;
   }
-
   .app-main {
     width: 100% !important;
     min-width: 0 !important;

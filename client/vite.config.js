@@ -13,15 +13,7 @@ export default defineConfig({
     }
   },
   build: {
-    outDir: 'dist',
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          pdfjs: ['pdfjs-dist'],
-          mammoth: ['mammoth'],
-        }
-      }
-    }
+    outDir: 'dist'
   },
   optimizeDeps: {
     exclude: ['pdfjs-dist']
