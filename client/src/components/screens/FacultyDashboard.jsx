@@ -12,32 +12,31 @@ export default function FacultyDashboard() {
   const [selectedStudent, setSelectedStudent] = useState(null)
   const [activeTab, setActiveTab] = useState('overview')
 
-  const token = localStorage.getItem('faculty_token')
-
   useEffect(() => {
-    if (!token) { navigate('/faculty'); return }
+    const storedToken = localStorage.getItem('faculty_token')
+    if (!storedToken) { navigate('/faculty'); return }
     const f = JSON.parse(localStorage.getItem('faculty') || '{}')
     setFaculty(f)
-    fetchData()
+    fetchData(storedToken)
   }, [])
 
-  const fetchData = async () => {
+  const fetchData = async (storedToken) => {
     try {
-      const headers = { Authorization: `Bearer ${token}` }
-      const [studentsRes] = await Promise.all([
-        axios.get('/api/teacher/students', { headers }),
-      ])
+      const headers = { Authorization: `Bearer ${storedToken}` }
+      const studentsRes = await axios.get('/api/teacher/students', { headers })
       setStudents(studentsRes.data)
     } catch (e) {
+      console.error('Fetch error:', e)
       if (e.response?.status === 401) navigate('/faculty')
     } finally { setLoading(false) }
   }
 
   const fetchInsights = async () => {
+    const storedToken = localStorage.getItem('faculty_token')
     setInsightsLoading(true)
     try {
       const r = await axios.get('/api/teacher/insights', {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${storedToken}` }
       })
       setInsights(r.data)
     } catch (e) {
@@ -69,8 +68,8 @@ export default function FacultyDashboard() {
   const atRisk = students.filter(s => getRiskLevel(s) === 'high')
   const mediumRisk = students.filter(s => getRiskLevel(s) === 'medium')
   const onTrack = students.filter(s => getRiskLevel(s) === 'low')
-  const avgScore = students.length > 0
-    ? Math.round(students.filter(s => s.reality_check?.overall_score).reduce((a, s) => a + s.reality_check.overall_score, 0) / (students.filter(s => s.reality_check?.overall_score).length || 1))
+  const avgScore = students.filter(s => s.reality_check?.overall_score).length > 0
+    ? Math.round(students.filter(s => s.reality_check?.overall_score).reduce((a, s) => a + s.reality_check.overall_score, 0) / students.filter(s => s.reality_check?.overall_score).length)
     : null
 
   const noDirection = students.filter(s => !s.dream_direction).length
@@ -142,7 +141,6 @@ export default function FacultyDashboard() {
         {/* OVERVIEW TAB */}
         {activeTab === 'overview' && (
           <div>
-            {/* Score cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
               {[
                 { label: 'Total Students', value: students.length, color: c.accent, sub: 'on Mirrova' },
@@ -158,7 +156,6 @@ export default function FacultyDashboard() {
               ))}
             </div>
 
-            {/* Student type distribution */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
               <div style={{ background: c.card, borderRadius: 16, padding: '24px', border: `1px solid ${c.border}` }}>
                 <p style={{ fontFamily: 'Inter', fontSize: 10, color: c.accent, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 16px' }}>Student type distribution</p>
@@ -179,7 +176,6 @@ export default function FacultyDashboard() {
                 ))}
               </div>
 
-              {/* Risk distribution */}
               <div style={{ background: c.card, borderRadius: 16, padding: '24px', border: `1px solid ${c.border}` }}>
                 <p style={{ fontFamily: 'Inter', fontSize: 10, color: c.accent, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 16px' }}>Risk distribution</p>
                 {[
@@ -199,7 +195,6 @@ export default function FacultyDashboard() {
               </div>
             </div>
 
-            {/* At risk students */}
             {atRisk.length > 0 && (
               <div style={{ background: 'rgba(114,47,55,0.08)', borderRadius: 16, padding: '24px', border: '1px solid rgba(114,47,55,0.2)' }}>
                 <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#722F37', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 16px' }}>🚨 Students needing immediate attention</p>
@@ -226,6 +221,16 @@ export default function FacultyDashboard() {
                 </div>
               </div>
             )}
+
+            {students.length === 0 && (
+              <div style={{ background: c.card, borderRadius: 16, padding: '48px', border: `1px solid ${c.border}`, textAlign: 'center' }}>
+                <p style={{ fontFamily: 'Inter', fontSize: 32, margin: '0 0 16px' }}>👩‍🎓</p>
+                <p style={{ fontFamily: 'Inter', fontSize: 16, color: c.text, fontWeight: 600, margin: '0 0 8px' }}>No students yet</p>
+                <p style={{ fontFamily: 'Inter', fontSize: 13, color: c.muted, margin: 0, lineHeight: 1.6 }}>
+                  Students appear here when they enter <strong style={{ color: c.text }}>{faculty?.college_name}</strong> as their college during onboarding.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -233,14 +238,12 @@ export default function FacultyDashboard() {
         {activeTab === 'students' && (
           <div style={{ display: 'grid', gridTemplateColumns: selectedStudent ? '1fr 380px' : '1fr', gap: 20 }}>
             <div>
-              <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
-                {students.length === 0 && (
-                  <div style={{ background: c.card, borderRadius: 16, padding: '40px', border: `1px solid ${c.border}`, textAlign: 'center', width: '100%' }}>
-                    <p style={{ fontFamily: 'Inter', fontSize: 16, color: c.muted, margin: '0 0 8px' }}>No students yet</p>
-                    <p style={{ fontFamily: 'Inter', fontSize: 13, color: '#4A4A4A', margin: 0 }}>Students need to enter your college name during onboarding to appear here.</p>
-                  </div>
-                )}
-              </div>
+              {students.length === 0 && (
+                <div style={{ background: c.card, borderRadius: 16, padding: '40px', border: `1px solid ${c.border}`, textAlign: 'center' }}>
+                  <p style={{ fontFamily: 'Inter', fontSize: 16, color: c.muted, margin: '0 0 8px' }}>No students yet</p>
+                  <p style={{ fontFamily: 'Inter', fontSize: 13, color: '#4A4A4A', margin: 0 }}>Students need to enter your college name during onboarding to appear here.</p>
+                </div>
+              )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {students.map(s => {
                   const risk = getRiskLevel(s)
@@ -273,7 +276,6 @@ export default function FacultyDashboard() {
               </div>
             </div>
 
-            {/* Student detail panel */}
             {selectedStudent && (
               <div style={{ background: c.card, borderRadius: 20, padding: '24px', border: `1px solid ${c.border}`, position: 'sticky', top: 20, maxHeight: 'calc(100vh - 120px)', overflowY: 'auto' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
@@ -286,7 +288,6 @@ export default function FacultyDashboard() {
                   </div>
                 </div>
 
-                {/* Quick stats */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
                   {[
                     { label: 'Reality Score', value: selectedStudent.reality_check?.overall_score || '—', color: scoreColor(selectedStudent.reality_check?.overall_score) },
@@ -301,7 +302,6 @@ export default function FacultyDashboard() {
                   ))}
                 </div>
 
-                {/* Profile details */}
                 {[
                   { label: 'Current field', value: selectedStudent.current_field },
                   { label: 'Dream direction', value: selectedStudent.dream_direction },
@@ -316,7 +316,6 @@ export default function FacultyDashboard() {
                   </div>
                 ))}
 
-                {/* Risk badge */}
                 <div style={{ marginTop: 16, padding: '12px 16px', borderRadius: 10, background: getRiskLevel(selectedStudent) === 'high' ? 'rgba(114,47,55,0.15)' : getRiskLevel(selectedStudent) === 'medium' ? 'rgba(251,160,2,0.1)' : 'rgba(15,158,153,0.1)', border: `1px solid ${getRiskLevel(selectedStudent) === 'high' ? 'rgba(114,47,55,0.3)' : getRiskLevel(selectedStudent) === 'medium' ? 'rgba(251,160,2,0.3)' : 'rgba(15,158,153,0.3)'}` }}>
                   <p style={{ fontFamily: 'Inter', fontSize: 12, color: getRiskLevel(selectedStudent) === 'high' ? '#722F37' : getRiskLevel(selectedStudent) === 'medium' ? '#FBA002' : '#0F9E99', fontWeight: 700, margin: 0 }}>
                     {getRiskLevel(selectedStudent) === 'high' ? '🚨 High risk — needs intervention' : getRiskLevel(selectedStudent) === 'medium' ? '⚠️ Medium risk — monitor closely' : '✅ On track — doing well'}
@@ -345,7 +344,7 @@ export default function FacultyDashboard() {
                 <div style={{ fontSize: 48, marginBottom: 16 }}>🧠</div>
                 <p style={{ fontFamily: 'Inter', fontSize: 16, color: c.text, fontWeight: 600, margin: '0 0 8px' }}>Generate AI class insights</p>
                 <p style={{ fontFamily: 'Inter', fontSize: 13, color: c.muted, margin: '0 auto 24px', maxWidth: 400, lineHeight: 1.7 }}>
-                  Mirrova will analyze all your students' profiles and give you actionable intelligence about your classroom.
+                  Mirrova will analyze all your students and give you actionable intelligence about your classroom.
                 </p>
                 <button onClick={fetchInsights}
                   style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 15, background: c.accent, color: '#fff', border: 'none', borderRadius: 99, padding: '14px 36px', cursor: 'pointer' }}>
@@ -354,16 +353,13 @@ export default function FacultyDashboard() {
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-
-                {/* Class summary */}
                 <div style={{ background: '#1A2118', borderRadius: 16, padding: '24px', border: '1px solid rgba(15,158,153,0.2)', gridColumn: '1 / -1' }}>
                   <p style={{ fontFamily: 'Inter', fontSize: 10, color: c.accent, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 10px' }}>📊 Class summary</p>
                   <p style={{ fontFamily: 'Inter', fontSize: 15, color: '#F2E8D1', margin: 0, lineHeight: 1.7, fontWeight: 500 }}>{insights.insights?.class_summary}</p>
                 </div>
 
-                {/* Top skill gaps */}
                 <div style={{ background: c.card, borderRadius: 16, padding: '24px', border: `1px solid ${c.border}` }}>
-                  <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#722F37', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 14px' }}>🚨 Top skill gaps in your class</p>
+                  <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#722F37', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 14px' }}>🚨 Top skill gaps</p>
                   {insights.insights?.top_skill_gaps?.map((gap, i) => (
                     <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 10, alignItems: 'flex-start' }}>
                       <div style={{ width: 24, height: 24, borderRadius: 6, background: 'rgba(114,47,55,0.15)', border: '1px solid rgba(114,47,55,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -374,9 +370,8 @@ export default function FacultyDashboard() {
                   ))}
                 </div>
 
-                {/* Common fears */}
                 <div style={{ background: c.card, borderRadius: 16, padding: '24px', border: `1px solid ${c.border}` }}>
-                  <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#FBA002', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 14px' }}>😰 Common fears in your class</p>
+                  <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#FBA002', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 14px' }}>😰 Common fears</p>
                   {insights.insights?.common_fears?.map((fear, i) => (
                     <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 10, alignItems: 'flex-start' }}>
                       <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#FBA002', flexShrink: 0, marginTop: 6 }} />
@@ -385,7 +380,6 @@ export default function FacultyDashboard() {
                   ))}
                 </div>
 
-                {/* Intervention suggestions */}
                 <div style={{ background: c.card, borderRadius: 16, padding: '24px', border: `1px solid ${c.border}` }}>
                   <p style={{ fontFamily: 'Inter', fontSize: 10, color: c.accent, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 14px' }}>💡 Suggested interventions</p>
                   {insights.insights?.intervention_suggestions?.map((s, i) => (
@@ -398,13 +392,11 @@ export default function FacultyDashboard() {
                   ))}
                 </div>
 
-                {/* This week action */}
                 <div style={{ background: '#1A2118', borderRadius: 16, padding: '24px', border: '1px solid rgba(251,160,2,0.2)', borderLeft: '4px solid #FBA002' }}>
                   <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#FBA002', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 10px' }}>🎯 Do this one thing this week</p>
                   <p style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 15, color: '#F2E8D1', margin: 0, lineHeight: 1.6 }}>{insights.insights?.this_week_for_teacher}</p>
                 </div>
 
-                {/* Market alignment */}
                 <div style={{ background: c.card, borderRadius: 16, padding: '24px', border: `1px solid ${c.border}`, gridColumn: '1 / -1' }}>
                   <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#615091', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 10px' }}>📈 Market alignment</p>
                   <p style={{ fontFamily: 'Inter', fontSize: 14, color: c.text, margin: 0, lineHeight: 1.7 }}>{insights.insights?.market_alignment}</p>
