@@ -41,6 +41,8 @@ export default function Dashboard() {
   const futureQuotes = chatMessages.filter(m => m.role === 'assistant')
   const dailyQuote = futureQuotes.length > 0 ? futureQuotes[new Date().getDate() % futureQuotes.length] : null
   const hasSkills = skills && skills.ratings && Object.keys(skills.ratings).length > 0
+  const criticalGap = skills?.gap_analysis?.critical_gaps?.[0]
+  const nextResource = nextTask?.resources?.youtube
 
   const scoreColor = (score) => {
     if (score >= 80) return '#0F9E99'
@@ -94,6 +96,87 @@ export default function Dashboard() {
           {chosenSelf ? `You're on your way to becoming a ${chosenSelf.job_title}.` : 'Your future self is waiting to meet you.'}
         </p>
       </div>
+
+      {/* ── DAILY BRIEFING ── */}
+      {(nextTask || criticalGap || dailyQuote || realityCheck) && (
+        <div style={{ background: 'linear-gradient(135deg, #0E1512, #1A2118)', borderRadius: 20, padding: isMobile ? '18px 16px' : '24px 28px', marginBottom: 20, border: '1px solid rgba(15,158,153,0.2)' }}>
+          <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#0F9E99', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 16px' }}>
+            ☀️ Your daily briefing
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+            {/* Today's task */}
+            {nextTask && (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 14px', background: 'rgba(255,255,255,0.04)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)' }}>
+                <span style={{ fontSize: 18, flexShrink: 0 }}>📅</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontFamily: 'Inter', fontSize: 10, color: c.accent, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 3px' }}>Do this today</p>
+                  <p style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: 13, color: '#F2E8D1', margin: '0 0 4px', lineHeight: 1.4 }}>{nextTask.title}</p>
+                  {nextTask.why && <p style={{ fontFamily: 'Inter', fontSize: 11, color: '#7A6E58', margin: '0 0 6px', fontStyle: 'italic' }}>{nextTask.why}</p>}
+                  {nextResource && (
+                    <a href={nextResource.url} target="_blank" rel="noopener noreferrer"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'Inter', fontSize: 11, color: c.accent, fontWeight: 600, background: `${c.accent}15`, padding: '4px 10px', borderRadius: 99, border: `1px solid ${c.accent}30`, textDecoration: 'none' }}>
+                      ▶️ Watch on YouTube →
+                    </a>
+                  )}
+                </div>
+                <button onClick={() => navigate('/sparkplan')}
+                  style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 11, background: c.accent, color: '#fff', border: 'none', borderRadius: 99, padding: '5px 12px', cursor: 'pointer', flexShrink: 0 }}>
+                  Open →
+                </button>
+              </div>
+            )}
+
+            {/* Critical gap alert */}
+            {criticalGap && (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 14px', background: 'rgba(114,47,55,0.08)', borderRadius: 12, border: '1px solid rgba(114,47,55,0.2)' }}>
+                <span style={{ fontSize: 18, flexShrink: 0 }}>🚨</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#722F37', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 3px' }}>Your biggest gap right now</p>
+                  <p style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: 13, color: '#F2E8D1', margin: '0 0 6px' }}>{criticalGap.skill}</p>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent('learn ' + criticalGap.skill + ' for beginners')}`}
+                      target="_blank" rel="noopener noreferrer"
+                      style={{ fontFamily: 'Inter', fontSize: 11, color: '#722F37', fontWeight: 600, background: 'rgba(114,47,55,0.15)', padding: '3px 10px', borderRadius: 99, textDecoration: 'none' }}>
+                      ▶️ YouTube
+                    </a>
+                    <a href={`https://www.google.com/search?q=free+${encodeURIComponent(criticalGap.skill)}+certification+coursera+OR+google`}
+                      target="_blank" rel="noopener noreferrer"
+                      style={{ fontFamily: 'Inter', fontSize: 11, color: '#722F37', fontWeight: 600, background: 'rgba(114,47,55,0.15)', padding: '3px 10px', borderRadius: 99, textDecoration: 'none' }}>
+                      🎓 Free course
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Reality check action */}
+            {realityCheck?.this_week_action && (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)' }}>
+                <span style={{ fontSize: 18, flexShrink: 0 }}>🎯</span>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#FBA002', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 3px' }}>This week's focus</p>
+                  <p style={{ fontFamily: 'Inter', fontSize: 13, color: '#F2E8D1', margin: 0, lineHeight: 1.5, fontWeight: 500 }}>{realityCheck.this_week_action}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Future self quote */}
+            {dailyQuote && (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 14px', background: 'rgba(97,80,145,0.08)', borderRadius: 12, border: '1px solid rgba(97,80,145,0.2)' }}>
+                <span style={{ fontSize: 18, flexShrink: 0 }}>🔮</span>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#615091', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 3px' }}>Your future self said</p>
+                  <p style={{ fontFamily: 'Inter', fontStyle: 'italic', fontSize: 12, color: '#B5A98A', margin: 0, lineHeight: 1.6 }}>
+                    "{dailyQuote.content.slice(0, 150)}{dailyQuote.content.length > 150 ? '...' : ''}"
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* MAIN GRID */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 320px', gap: 16 }}>
@@ -193,16 +276,6 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* TODAY'S MESSAGE */}
-          {dailyQuote && (
-            <div style={card({ background: `${c.accent}08`, border: `1px solid ${c.accent}25` })}>
-              <p style={lbl(c.accent)}>Today's message from your future self</p>
-              <p style={{ fontFamily: 'Inter', fontStyle: 'italic', fontSize: 13, color: c.text, margin: 0, lineHeight: 1.75, fontWeight: 500 }}>
-                "{dailyQuote.content.slice(0, 200)}{dailyQuote.content.length > 200 ? '...' : ''}"
-              </p>
-            </div>
-          )}
-
           {/* SPARK PLAN PROGRESS */}
           <div style={card({ borderLeft: `4px solid ${c.accent}` })}>
             <p style={lbl(c.accent)}>Spark plan progress</p>
@@ -243,7 +316,7 @@ export default function Dashboard() {
           {/* QUICK ACTIONS */}
           <div style={card()}>
             <p style={lbl()}>Quick actions</p>
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(3, 1fr)', gap: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
               {quickActions.map(action => (
                 <button key={action.path} onClick={() => navigate(action.path)}
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '12px 8px', borderRadius: 12, border: `1px solid ${c.border}`, background: c.bgMid, cursor: 'pointer', transition: 'all 0.15s' }}
@@ -258,7 +331,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* RIGHT — on mobile this shows below left */}
+        {/* RIGHT */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
           {/* REALITY CHECK SCORE */}
@@ -283,12 +356,6 @@ export default function Dashboard() {
                     <p style={{ fontFamily: 'Inter', fontSize: 12, color: c.textMuted, margin: 0, lineHeight: 1.5 }}>{realityCheck.headline}</p>
                   </div>
                 </div>
-                {realityCheck.this_week_action && (
-                  <div style={{ background: `${c.accent}10`, borderRadius: 10, padding: '10px 14px', border: `1px solid ${c.accent}25`, marginBottom: 12 }}>
-                    <p style={{ fontFamily: 'Inter', fontSize: 10, color: c.accent, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>🎯 Do this week</p>
-                    <p style={{ fontFamily: 'Inter', fontSize: 12, color: c.text, margin: 0, lineHeight: 1.5, fontWeight: 500 }}>{realityCheck.this_week_action}</p>
-                  </div>
-                )}
                 <button onClick={() => navigate('/realitycheck')}
                   style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 13, background: 'transparent', color: c.accent, border: `1.5px solid ${c.accent}`, borderRadius: 99, padding: '9px', cursor: 'pointer', width: '100%' }}>
                   View full report →
