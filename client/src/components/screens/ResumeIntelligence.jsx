@@ -14,7 +14,41 @@ export default function ResumeIntelligence() {
   const [activeTab, setActiveTab] = useState('overview')
   const [uploading, setUploading] = useState(false)
   const [fileName, setFileName] = useState('')
+  const [intent, setIntent] = useState(null)
+  const [targetRole, setTargetRole] = useState('')
+  const [jobDescription, setJobDescription] = useState('')
   const fileRef = useRef(null)
+
+  const intents = [
+    {
+      key: 'mirrova',
+      icon: '🪞',
+      title: 'Use my Mirrova profile',
+      desc: 'Mirrova already knows your goals, gaps and dream role. Get the most personalized analysis possible.',
+      color: '#0F9E99'
+    },
+    {
+      key: 'know',
+      icon: '🎯',
+      title: 'I know what I want',
+      desc: 'Tell us your target role and we analyze your resume specifically for that position.',
+      color: '#FBA002'
+    },
+    {
+      key: 'lost',
+      icon: '🧭',
+      title: 'I have no idea',
+      desc: "Not sure what you want? We'll analyze your resume and tell you what roles you're already good for.",
+      color: '#615091'
+    },
+    {
+      key: 'opportunity',
+      icon: '⚡',
+      title: 'I have an opportunity',
+      desc: 'Paste a job description and we tell you exactly how to tailor your resume to get this specific job.',
+      color: '#722F37'
+    },
+  ]
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0]
@@ -50,17 +84,23 @@ export default function ResumeIntelligence() {
         setResumeText(fullText)
       }
     } catch (err) {
-      console.error(err)
       alert('Error reading file. Please paste your resume text instead.')
       setFileName('')
     } finally { setUploading(false) }
   }
 
   const analyze = async () => {
-    if (!resumeText.trim()) return
+    if (!resumeText.trim() || !intent) return
+    if (intent === 'know' && !targetRole.trim()) return
+    if (intent === 'opportunity' && !jobDescription.trim()) return
     setLoading(true)
     try {
-      const r = await axios.post('/api/resume/analyze', { resume_text: resumeText })
+      const r = await axios.post('/api/resume/analyze', {
+        resume_text: resumeText,
+        intent,
+        target_role: targetRole,
+        job_description: jobDescription
+      })
       setResult(r.data)
       setActiveTab('overview')
     } catch (e) {
@@ -98,6 +138,8 @@ export default function ResumeIntelligence() {
     { key: 'polish', label: isMobile ? '✨' : '✨ Polish' },
   ]
 
+  const selectedIntent = intents.find(i => i.key === intent)
+
   return (
     <div style={{ padding: isMobile ? '20px 16px' : '40px 48px', color: c.text }}>
 
@@ -106,118 +148,156 @@ export default function ResumeIntelligence() {
           Resume Intelligence
         </h1>
         <p style={{ fontFamily: 'Inter', fontSize: isMobile ? 13 : 15, color: c.textMuted, margin: 0, fontWeight: 500, lineHeight: 1.6 }}>
-          Upload or paste your resume. Get a brutally honest analysis, ATS score and exactly what to fix.
+          Upload your resume. Tell us your situation. Get a brutally honest analysis built around you.
         </p>
       </div>
 
       {!result ? (
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 300px', gap: 16 }}>
-          <div style={card()}>
-            <p style={lbl()}>Upload or paste your resume</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-            {/* File upload zone */}
-            <div
-              onClick={() => fileRef.current?.click()}
-              onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor = c.accent }}
-              onDragLeave={e => { e.currentTarget.style.borderColor = c.border }}
-              onDrop={async e => {
-                e.preventDefault()
-                e.currentTarget.style.borderColor = c.border
-                const file = e.dataTransfer.files[0]
-                if (file) await handleFileUpload({ target: { files: [file] } })
-              }}
-              style={{ border: `2px dashed ${fileName ? c.accent : c.border}`, borderRadius: 14, padding: isMobile ? '20px' : '28px', textAlign: 'center', cursor: 'pointer', marginBottom: 16, background: fileName ? `${c.accent}08` : 'transparent', transition: 'all 0.2s' }}>
-              <input ref={fileRef} type="file" accept=".pdf,.docx,.txt" onChange={handleFileUpload} style={{ display: 'none' }} />
-              {uploading ? (
-                <p style={{ fontFamily: 'Inter', fontSize: 14, color: c.accent, margin: 0, fontWeight: 600 }}>Reading your resume...</p>
-              ) : fileName ? (
-                <>
-                  <span style={{ fontSize: 28, display: 'block', marginBottom: 6 }}>✅</span>
-                  <p style={{ fontFamily: 'Inter', fontSize: 13, color: c.accent, margin: '0 0 4px', fontWeight: 700 }}>{fileName}</p>
-                  <p style={{ fontFamily: 'Inter', fontSize: 11, color: c.textMuted, margin: 0 }}>Tap to change file</p>
-                </>
-              ) : (
-                <>
-                  <span style={{ fontSize: 28, display: 'block', marginBottom: 8 }}>📄</span>
-                  <p style={{ fontFamily: 'Inter', fontSize: isMobile ? 14 : 15, color: c.text, margin: '0 0 4px', fontWeight: 600 }}>
-                    {isMobile ? 'Tap to upload resume' : 'Drop your resume here'}
-                  </p>
-                  <p style={{ fontFamily: 'Inter', fontSize: 12, color: c.textMuted, margin: '0 0 10px' }}>PDF, DOCX or TXT</p>
-                  <span style={{ fontFamily: 'Inter', fontSize: 12, color: c.accent, fontWeight: 700, background: `${c.accent}15`, padding: '5px 14px', borderRadius: 99, border: `1px solid ${c.accent}30` }}>Browse files →</span>
-                </>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-              <div style={{ flex: 1, height: 1, background: c.border }} />
-              <span style={{ fontFamily: 'Inter', fontSize: 10, color: c.textMuted, fontWeight: 600, letterSpacing: '0.06em' }}>OR PASTE</span>
-              <div style={{ flex: 1, height: 1, background: c.border }} />
-            </div>
-
-            <textarea
-              value={resumeText}
-              onChange={e => setResumeText(e.target.value)}
-              placeholder="Paste your full resume here..."
-              rows={isMobile ? 8 : 14}
-              style={{ width: '100%', borderRadius: 12, border: `1.5px solid ${c.border}`, padding: '12px 14px', fontSize: 13, fontFamily: 'Inter', background: c.bgMid, color: c.text, outline: 'none', resize: 'vertical', boxSizing: 'border-box', lineHeight: 1.7 }}
-              onFocus={e => e.target.style.borderColor = c.accent}
-              onBlur={e => e.target.style.borderColor = c.border}
-            />
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, flexWrap: 'wrap', gap: 8 }}>
-              <span style={{ fontFamily: 'Inter', fontSize: 12, color: c.textMuted }}>
-                {resumeText.length > 0 ? `${resumeText.split(' ').filter(Boolean).length} words` : 'No content yet'}
-              </span>
-              <button onClick={analyze} disabled={loading || !resumeText.trim()}
-                style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 14, background: c.accent, color: c.accentText, border: 'none', borderRadius: 99, padding: '12px 28px', cursor: 'pointer', opacity: loading || !resumeText.trim() ? 0.6 : 1, width: isMobile ? '100%' : 'auto' }}>
-                {loading ? '⏳ Analyzing...' : 'Analyze my resume →'}
-              </button>
+          {/* INTENT SELECTOR */}
+          <div>
+            <p style={{ fontFamily: 'Inter', fontSize: 13, color: c.text, fontWeight: 700, margin: '0 0 12px' }}>
+              First — what's your situation?
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 10 }}>
+              {intents.map(opt => (
+                <button key={opt.key} onClick={() => setIntent(opt.key)}
+                  style={{ padding: '14px 12px', borderRadius: 14, border: `1.5px solid ${intent === opt.key ? opt.color : c.border}`, background: intent === opt.key ? `${opt.color}12` : c.bgCard, cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s' }}>
+                  <span style={{ fontSize: 22, display: 'block', marginBottom: 8 }}>{opt.icon}</span>
+                  <p style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 12, color: intent === opt.key ? opt.color : c.text, margin: '0 0 4px', lineHeight: 1.3 }}>{opt.title}</p>
+                  {!isMobile && <p style={{ fontFamily: 'Inter', fontSize: 11, color: c.textMuted, margin: 0, lineHeight: 1.5 }}>{opt.desc}</p>}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Right panel — hidden on mobile to save space */}
-          {!isMobile && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ background: '#1A2118', borderRadius: 16, padding: '24px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <p style={lbl('#0F9E99')}>What you'll get</p>
-                {[
-                  { icon: '🎯', title: 'ATS Score', desc: 'How well you pass automated screening' },
-                  { icon: '👁️', title: '6-Second Impression', desc: 'What recruiters think at first glance' },
-                  { icon: '✏️', title: 'Bullet Rewrites', desc: 'Weak bullets rewritten with impact' },
-                  { icon: '📊', title: 'Section Analysis', desc: 'Score and feedback per section' },
-                  { icon: '🚀', title: 'Skills to Add', desc: 'Missing skills ranked by importance' },
-                  { icon: '✨', title: 'Polish Tips', desc: 'Formatting and presentation fixes' },
-                ].map((item, i) => (
-                  <div key={i} style={{ display: 'flex', gap: 12, marginBottom: i < 5 ? 12 : 0, alignItems: 'flex-start' }}>
-                    <span style={{ fontSize: 18, flexShrink: 0 }}>{item.icon}</span>
-                    <div>
-                      <p style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: 13, color: '#F2E8D1', margin: '0 0 2px' }}>{item.title}</p>
-                      <p style={{ fontFamily: 'Inter', fontSize: 11, color: '#7A6E58', margin: 0 }}>{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
+          {/* INTENT SPECIFIC INPUTS */}
+          {intent === 'know' && (
+            <div style={card()}>
+              <p style={lbl(selectedIntent?.color)}>What role are you targeting?</p>
+              <input
+                value={targetRole}
+                onChange={e => setTargetRole(e.target.value)}
+                placeholder="e.g. UX Designer, Software Engineer, Data Analyst..."
+                style={{ width: '100%', height: 44, borderRadius: 99, border: `1.5px solid ${c.border}`, padding: '0 18px', fontSize: 14, fontFamily: 'Inter', background: c.bgMid, color: c.text, outline: 'none', boxSizing: 'border-box' }}
+                onFocus={e => e.target.style.borderColor = '#FBA002'}
+                onBlur={e => e.target.style.borderColor = c.border}
+              />
+            </div>
+          )}
+
+          {intent === 'opportunity' && (
+            <div style={card()}>
+              <p style={lbl(selectedIntent?.color)}>Paste the job description</p>
+              <textarea
+                value={jobDescription}
+                onChange={e => setJobDescription(e.target.value)}
+                placeholder="Paste the full job description here — the more detail the better..."
+                rows={6}
+                style={{ width: '100%', borderRadius: 12, border: `1.5px solid ${c.border}`, padding: '12px 14px', fontSize: 13, fontFamily: 'Inter', background: c.bgMid, color: c.text, outline: 'none', resize: 'vertical', boxSizing: 'border-box', lineHeight: 1.7 }}
+                onFocus={e => e.target.style.borderColor = '#722F37'}
+                onBlur={e => e.target.style.borderColor = c.border}
+              />
+            </div>
+          )}
+
+          {intent === 'mirrova' && (
+            <div style={{ background: `${c.accent}10`, borderRadius: 14, padding: '14px 18px', border: `1px solid ${c.accent}25` }}>
+              <p style={{ fontFamily: 'Inter', fontSize: 13, color: c.accent, fontWeight: 600, margin: 0, lineHeight: 1.6 }}>
+                🪞 Mirrova will use everything it knows about you — your chosen future role, your skill gaps, your fears, your city — to give you the most personalized resume analysis possible.
+              </p>
+            </div>
+          )}
+
+          {intent === 'lost' && (
+            <div style={{ background: 'rgba(97,80,145,0.1)', borderRadius: 14, padding: '14px 18px', border: '1px solid rgba(97,80,145,0.25)' }}>
+              <p style={{ fontFamily: 'Inter', fontSize: 13, color: '#C3B9E8', fontWeight: 600, margin: 0, lineHeight: 1.6 }}>
+                🧭 No direction yet? That's okay. Mirrova will read your resume and tell you what you're already good at — and which roles would actually want you right now.
+              </p>
+            </div>
+          )}
+
+          {/* RESUME UPLOAD — only show after intent is selected */}
+          {intent && (
+            <div style={card()}>
+              <p style={lbl()}>Now upload or paste your resume</p>
+
+              <div
+                onClick={() => fileRef.current?.click()}
+                onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor = c.accent }}
+                onDragLeave={e => { e.currentTarget.style.borderColor = c.border }}
+                onDrop={async e => {
+                  e.preventDefault()
+                  e.currentTarget.style.borderColor = c.border
+                  const file = e.dataTransfer.files[0]
+                  if (file) await handleFileUpload({ target: { files: [file] } })
+                }}
+                style={{ border: `2px dashed ${fileName ? c.accent : c.border}`, borderRadius: 14, padding: isMobile ? '20px' : '28px', textAlign: 'center', cursor: 'pointer', marginBottom: 16, background: fileName ? `${c.accent}08` : 'transparent', transition: 'all 0.2s' }}>
+                <input ref={fileRef} type="file" accept=".pdf,.docx,.txt" onChange={handleFileUpload} style={{ display: 'none' }} />
+                {uploading ? (
+                  <p style={{ fontFamily: 'Inter', fontSize: 14, color: c.accent, margin: 0, fontWeight: 600 }}>Reading your resume...</p>
+                ) : fileName ? (
+                  <>
+                    <span style={{ fontSize: 28, display: 'block', marginBottom: 6 }}>✅</span>
+                    <p style={{ fontFamily: 'Inter', fontSize: 13, color: c.accent, margin: '0 0 4px', fontWeight: 700 }}>{fileName}</p>
+                    <p style={{ fontFamily: 'Inter', fontSize: 11, color: c.textMuted, margin: 0 }}>Tap to change file</p>
+                  </>
+                ) : (
+                  <>
+                    <span style={{ fontSize: 28, display: 'block', marginBottom: 8 }}>📄</span>
+                    <p style={{ fontFamily: 'Inter', fontSize: isMobile ? 14 : 15, color: c.text, margin: '0 0 4px', fontWeight: 600 }}>
+                      {isMobile ? 'Tap to upload resume' : 'Drop your resume here'}
+                    </p>
+                    <p style={{ fontFamily: 'Inter', fontSize: 12, color: c.textMuted, margin: '0 0 10px' }}>PDF, DOCX or TXT</p>
+                    <span style={{ fontFamily: 'Inter', fontSize: 12, color: c.accent, fontWeight: 700, background: `${c.accent}15`, padding: '5px 14px', borderRadius: 99, border: `1px solid ${c.accent}30` }}>Browse files →</span>
+                  </>
+                )}
               </div>
-              <div style={card({ borderLeft: `4px solid #FBA002` })}>
-                <p style={lbl('#FBA002')}>Tips</p>
-                {['DOCX gives best extraction', 'Include full resume', 'More detail = better analysis'].map((tip, i) => (
-                  <div key={i} style={{ display: 'flex', gap: 8, marginBottom: i < 2 ? 8 : 0 }}>
-                    <span style={{ color: '#FBA002', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
-                    <p style={{ fontFamily: 'Inter', fontSize: 12, color: c.text, margin: 0, lineHeight: 1.5 }}>{tip}</p>
-                  </div>
-                ))}
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                <div style={{ flex: 1, height: 1, background: c.border }} />
+                <span style={{ fontFamily: 'Inter', fontSize: 10, color: c.textMuted, fontWeight: 600, letterSpacing: '0.06em' }}>OR PASTE</span>
+                <div style={{ flex: 1, height: 1, background: c.border }} />
+              </div>
+
+              <textarea
+                value={resumeText}
+                onChange={e => setResumeText(e.target.value)}
+                placeholder="Paste your full resume here..."
+                rows={isMobile ? 8 : 12}
+                style={{ width: '100%', borderRadius: 12, border: `1.5px solid ${c.border}`, padding: '12px 14px', fontSize: 13, fontFamily: 'Inter', background: c.bgMid, color: c.text, outline: 'none', resize: 'vertical', boxSizing: 'border-box', lineHeight: 1.7 }}
+                onFocus={e => e.target.style.borderColor = c.accent}
+                onBlur={e => e.target.style.borderColor = c.border}
+              />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, flexWrap: 'wrap', gap: 8 }}>
+                <span style={{ fontFamily: 'Inter', fontSize: 12, color: c.textMuted }}>
+                  {resumeText.length > 0 ? `${resumeText.split(' ').filter(Boolean).length} words` : 'No content yet'}
+                </span>
+                <button onClick={analyze} disabled={loading || !resumeText.trim() || (intent === 'know' && !targetRole.trim()) || (intent === 'opportunity' && !jobDescription.trim())}
+                  style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 14, background: selectedIntent?.color || c.accent, color: '#fff', border: 'none', borderRadius: 99, padding: '12px 28px', cursor: 'pointer', opacity: loading || !resumeText.trim() ? 0.6 : 1, width: isMobile ? '100%' : 'auto' }}>
+                  {loading ? '⏳ Analyzing...' : `Analyze with ${selectedIntent?.title} →`}
+                </button>
               </div>
             </div>
           )}
         </div>
       ) : (
         <div>
+          {/* Intent badge */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: `${scoreColor(result.overall_score)}15`, border: `1px solid ${scoreColor(result.overall_score)}30`, borderRadius: 99, padding: '5px 14px', marginBottom: 16 }}>
+            <span style={{ fontSize: 14 }}>{intents.find(i => i.key === result.intent)?.icon}</span>
+            <span style={{ fontFamily: 'Inter', fontSize: 12, color: scoreColor(result.overall_score), fontWeight: 700 }}>{result.intent_summary}</span>
+          </div>
+
           {/* Score cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 10, marginBottom: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 10, marginBottom: 16 }}>
             {[
               { label: 'Overall', value: result.overall_score, color: scoreColor(result.overall_score) },
               { label: 'ATS Score', value: result.ats_score, color: scoreColor(result.ats_score) },
+              { label: 'Role Match', value: result.role_match_score, color: scoreColor(result.role_match_score) },
               { label: 'Skills', value: result.sections?.skills?.score, color: scoreColor(result.sections?.skills?.score) },
-              { label: 'Experience', value: result.sections?.experience?.score, color: scoreColor(result.sections?.experience?.score) },
             ].map(s => (
               <div key={s.label} style={card({ textAlign: 'center' })}>
                 <p style={{ fontFamily: 'Inter', fontWeight: 800, fontSize: isMobile ? 26 : 32, color: s.color, margin: '0 0 4px', lineHeight: 1 }}>
@@ -228,15 +308,39 @@ export default function ResumeIntelligence() {
             ))}
           </div>
 
+          {/* Role match verdict */}
+          {result.role_match_verdict && (
+            <div style={{ background: '#1A2118', borderRadius: 14, padding: '14px 18px', marginBottom: 16, border: `1px solid ${scoreColor(result.role_match_score)}30`, borderLeft: `4px solid ${scoreColor(result.role_match_score)}` }}>
+              <p style={{ fontFamily: 'Inter', fontSize: 10, color: scoreColor(result.role_match_score), fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>
+                Role: {result.target_role_identified}
+              </p>
+              <p style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: 14, color: '#F2E8D1', margin: 0, lineHeight: 1.5 }}>{result.role_match_verdict}</p>
+            </div>
+          )}
+
+          {/* Suggested roles for lost intent */}
+          {result.intent === 'lost' && result.suggested_roles && (
+            <div style={card({ marginBottom: 16, borderTop: '3px solid #615091' })}>
+              <p style={lbl('#615091')}>🧭 Roles your resume is already good for</p>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {result.suggested_roles.map((role, i) => (
+                  <span key={i} style={{ fontFamily: 'Inter', fontSize: 13, color: '#615091', background: 'rgba(97,80,145,0.1)', padding: '6px 14px', borderRadius: 99, fontWeight: 600, border: '1px solid rgba(97,80,145,0.25)' }}>
+                    {role}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Recruiter impression */}
           <div style={{ background: '#1A2118', borderRadius: 16, padding: isMobile ? '16px' : '24px', marginBottom: 16, border: '1px solid rgba(255,255,255,0.06)' }}>
             <p style={lbl('#FBA002')}>👁️ 6-second recruiter impression</p>
             <p style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 600, fontSize: isMobile ? 14 : 16, color: '#F2E8D1', margin: '0 0 14px', lineHeight: 1.6 }}>
               "{result.recruiter_impression}"
             </p>
-            <button onClick={() => { setResult(null); setResumeText(''); setFileName('') }}
+            <button onClick={() => { setResult(null); setResumeText(''); setFileName(''); setIntent(null); setTargetRole(''); setJobDescription('') }}
               style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 13, background: 'transparent', color: c.textMuted, border: `1.5px solid ${c.border}`, borderRadius: 99, padding: '8px 18px', cursor: 'pointer' }}>
-              ← Analyze new resume
+              ← Analyze again
             </button>
           </div>
 
