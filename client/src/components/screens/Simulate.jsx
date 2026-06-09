@@ -179,7 +179,7 @@ export default function Simulate() {
                   <span style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 11, background: colors.btnPrimary, color: colors.btnPrimaryText, padding: '3px 12px', borderRadius: 99, display: 'inline-block', marginBottom: 14 }}>✓ Chosen self</span>
                 )}
                 <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: isMobile ? 17 : 19, color: colors.btnPrimary, margin: '0 0 6px' }}>{f.job_title}</p>
-                <p style={{ fontFamily: 'Inter', fontSize: 13, color: colors.textMuted, margin: '0 0 4px', fontWeight: 500 }}>{f.company_type} · {f.city} · {f.year}</p>
+                <p style={{ fontFamily: 'Inter', fontSize: 13, color: colors.textMuted, margin: '0 0 4px', fontWeight: 500 }}>{f.company_type} · {f.city} · {f.year} <span style={{ fontSize: 11, opacity: 0.5 }}>· possible future</span></p>
                 <p style={{ fontFamily: 'Inter', fontSize: 13, color: colors.textMuted, margin: '0 0 18px', fontWeight: 500 }}>
                   ₹{Math.round(f.salary_min / 1000)}k – ₹{Math.round(f.salary_max / 1000)}k/month
                 </p>
