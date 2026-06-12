@@ -1,13 +1,12 @@
 const express = require('express');
-const Groq = require('groq-sdk');
 const pool = require('../db/pool');
 const authMiddleware = require('../middleware/auth');
+const { groqWithFallback } = require('../utils/groqWithFallback');
 
 const router = express.Router();
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const systemPrompts = {
-  English: `You are a brutally honest career intelligence AI. You analyze a student's profile and give them a Reality Check Score — not to demotivate them, but to show them exactly where they stand and what to do next. Be direct, specific, data-driven. No fluff. Every student's score MUST be unique based on their specific profile — never give the same score twice.`,
+  English: `You are a brutally honest career intelligence AI for Indian students. You analyze a student's profile and give them a Reality Check Score — not to demotivate them, but to show them exactly where they stand and what to do next. Be direct, specific, data-driven. No fluff. Every student's score MUST be unique based on their specific profile — never give the same score twice.`,
   Hindi: `आप एक बेहद ईमानदार career intelligence AI हैं। हर student का score उनकी unique profile के आधार पर अलग होना चाहिए।`,
   Tamil: `நீங்கள் ஒரு மிகவும் நேர்மையான career intelligence AI. ஒவ்வொரு மாணவரின் score அவர்களின் தனித்துவமான profile-ஐ அடிப்படையாகக் கொண்டு வேறுபட வேண்டும்.`,
   Telugu: `మీరు చాలా నిజాయితీగా ఉన్న career intelligence AI. ప్రతి విద్యార్థి యొక్క score వారి unique profile ఆధారంగా భిన్నంగా ఉండాలి.`,
@@ -15,7 +14,6 @@ const systemPrompts = {
   Bengali: `আপনি একটি সৎ career intelligence AI। প্রতিটি ছাত্রের score তাদের unique profile এর উপর ভিত্তি করে আলাদা হওয়া উচিত।`,
 }
 
-// POST /api/realitycheck/generate
 router.post('/generate', authMiddleware, async (req, res) => {
   try {
     const profileResult = await pool.query(
@@ -29,7 +27,6 @@ router.post('/generate', authMiddleware, async (req, res) => {
     const language = profile.preferred_language || 'English'
     const systemPrompt = systemPrompts[language] || systemPrompts['English']
 
-    // Parse skills assessment if available
     let skillsData = null
     if (profile.skills_assessment) {
       try {
@@ -40,7 +37,6 @@ router.post('/generate', authMiddleware, async (req, res) => {
       } catch (e) {}
     }
 
-    // Format skills for prompt
     const skillsText = skillsData
       ? Object.entries(skillsData)
           .map(([skill, rating]) => {
@@ -82,13 +78,11 @@ Consider:
 - Hours available matters (1hr/day vs 4hrs/day = different timeline)
 - Built anything = huge positive signal
 - Self-assessed skills reveal real capability gaps
-- If student rated themselves low on critical skills → lower score
-- If student rated themselves high on relevant skills → higher score
 - Biggest blocker reveals hidden challenges
 
-Return a JSON object:
+Return ONLY valid JSON:
 {
-  "overall_score": <number 0-100, must be specific to this student>,
+  "overall_score": <number 0-100>,
   "score_label": "<Critical/Needs Work/Average/Good/Strong>",
   "headline": "<one punchy sentence in ${language}>",
   "market_reality": "<2-3 sentences about actual job market for their dream in India in ${language}>",
@@ -106,14 +100,11 @@ Return a JSON object:
 
 Return ONLY valid JSON. No markdown. No explanation.`
 
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: prompt }
-      ],
+    const completion = await groqWithFallback({
+      messages: [{ role: 'user', content: prompt }],
       temperature: 0.9,
-      max_tokens: 1500
+      max_tokens: 1500,
+      systemExtra: systemPrompt
     });
 
     let result;
@@ -132,11 +123,10 @@ Return ONLY valid JSON. No markdown. No explanation.`
     res.json(result);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error', details: err.message });
+    res.status(500).json({ error: err.message || 'Server error' });
   }
 });
 
-// GET /api/realitycheck
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(

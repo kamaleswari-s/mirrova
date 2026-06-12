@@ -1,16 +1,107 @@
 import { useNavigate } from 'react-router-dom'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
+
+const tools = [
+  {
+    num: '01',
+    title: 'Future Self Simulator',
+    desc: 'Chat with 3 AI versions of yourself, 5 years from now. Each has lived a different path. Ask them anything — in Tamil, Hindi, Telugu, Kannada, Bengali or English.',
+    accent: '#0F9E99',
+    tag: 'Hero feature',
+  },
+  {
+    num: '02',
+    title: 'Reality Check',
+    desc: 'Get a brutally honest career readiness score based on your skills, city, college tier and target role. Know exactly where you stand — not where you hope to be.',
+    accent: '#FBA002',
+    tag: 'Most honest',
+  },
+  {
+    num: '03',
+    title: 'Resume Intelligence',
+    desc: 'Upload your resume. Tell us your situation. Get an ATS score, recruiter impression, weak bullets rewritten, and the exact skills you need to add.',
+    accent: '#615091',
+    tag: 'Most used',
+  },
+  {
+    num: '04',
+    title: 'Skills Assessment',
+    desc: 'Rate yourself on the skills your target role actually requires. Get a gap analysis with resources to close each gap — YouTube, free courses, books.',
+    accent: '#0F9E99',
+    tag: 'Know yourself',
+  },
+  {
+    num: '05',
+    title: '90-Day Spark Plan',
+    desc: 'Week-by-week action plan built around your specific gaps and time available. Every task comes with real resources — not generic advice.',
+    accent: '#D4A842',
+    tag: 'Take action',
+  },
+  {
+    num: '06',
+    title: 'Career SWOT',
+    desc: 'Strengths, weaknesses, opportunities and threats — a full actionable report personalized to your profile and target role.',
+    accent: '#0F9E99',
+    tag: 'Full picture',
+  },
+  {
+    num: '07',
+    title: 'Rejection Decoder',
+    desc: 'Paste a rejection email or describe what happened. Mirrova tells you what it actually means and exactly what to fix before the next application.',
+    accent: '#722F37',
+    tag: 'Get answers',
+  },
+  {
+    num: '08',
+    title: 'Pivot Bridge',
+    desc: "Already in the wrong course or career? Mirrova maps the exact step-by-step path from where you are to where you want to be — using what you already have.",
+    accent: '#D4A842',
+    tag: 'Change paths',
+  },
+  {
+    num: '09',
+    title: 'Direction Finder',
+    desc: "Don't know what you want? Answer 3 questions and Mirrova suggests 3 career paths that genuinely fit your personality, skills and situation.",
+    accent: '#C3B9E8',
+    tag: 'Find your way',
+  },
+  {
+    num: '10',
+    title: 'Employability Passport',
+    desc: 'A shareable public profile you can send to employers instead of a plain resume. Shows your skills, target role, and career journey.',
+    accent: '#615091',
+    tag: 'Stand out',
+  },
+]
 
 export default function Landing() {
   const navigate = useNavigate()
   const aboutRef = useRef(null)
   const whyRef = useRef(null)
   const howRef = useRef(null)
+  const [current, setCurrent] = useState(0)
+  const [direction, setDirection] = useState(null)
+  const [animating, setAnimating] = useState(false)
 
   const handleMode = (mode) => {
     sessionStorage.setItem('mirrova_mode', mode)
     navigate('/signup')
   }
+
+  const goTo = (next) => {
+    if (animating) return
+    setDirection(next > current ? 'right' : 'left')
+    setAnimating(true)
+    setTimeout(() => {
+      setCurrent(next)
+      setAnimating(false)
+    }, 300)
+  }
+
+  const prev = () => goTo(current === 0 ? tools.length - 1 : current - 1)
+  const next = () => goTo(current === tools.length - 1 ? 0 : current + 1)
+
+  const tool = tools[current]
 
   return (
     <div style={{ fontFamily: 'Inter, sans-serif', background: '#F5F0E8', overflowX: 'hidden' }}>
@@ -44,7 +135,7 @@ export default function Landing() {
           <div style={{ display: 'flex', gap: 32, position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
             {[['About', aboutRef], ['Why Mirrova', whyRef], ['How it works', howRef]].map(([label, ref]) => (
               <button key={label} onClick={() => ref.current?.scrollIntoView({ behavior: 'smooth' })}
-                style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: 12, color: '#8A7E6A', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.04em', transition: 'color 0.15s', textTransform: 'uppercase' }}
+                style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: 12, color: '#8A7E6A', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.04em', transition: 'color 0.15s', textTransform: 'uppercase' }}
                 onMouseEnter={e => e.currentTarget.style.color = '#F2E8D1'}
                 onMouseLeave={e => e.currentTarget.style.color = '#8A7E6A'}
               >{label}</button>
@@ -52,11 +143,11 @@ export default function Landing() {
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flex: 1, justifyContent: 'flex-end' }}>
             <button onClick={() => navigate('/login')}
-              style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: 12, color: '#F2E8D1', background: 'none', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 99, padding: '7px 18px', cursor: 'pointer' }}>
+              style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: 12, color: '#F2E8D1', background: 'none', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 99, padding: '7px 18px', cursor: 'pointer' }}>
               Sign in
             </button>
             <button onClick={() => navigate('/signup')}
-              style={{ fontFamily: 'Inter, sans-serif', fontStyle: 'italic', fontWeight: 700, fontSize: 12, background: '#0F9E99', color: '#EFE9E0', border: 'none', borderRadius: 99, padding: '8px 18px', cursor: 'pointer' }}>
+              style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 12, background: '#0F9E99', color: '#EFE9E0', border: 'none', borderRadius: 99, padding: '8px 18px', cursor: 'pointer' }}>
               Get started free →
             </button>
           </div>
@@ -97,11 +188,11 @@ export default function Landing() {
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button onClick={() => aboutRef.current?.scrollIntoView({ behavior: 'smooth' })}
-              style={{ fontFamily: 'Inter, sans-serif', fontStyle: 'italic', fontWeight: 700, fontSize: 14, background: '#0F9E99', color: '#EFE9E0', border: 'none', borderRadius: 99, padding: '12px 28px', cursor: 'pointer' }}>
+              style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 14, background: '#0F9E99', color: '#EFE9E0', border: 'none', borderRadius: 99, padding: '12px 28px', cursor: 'pointer' }}>
               See my future →
             </button>
             <button onClick={() => handleMode('rejected')}
-              style={{ fontFamily: 'Inter, sans-serif', fontStyle: 'italic', fontWeight: 700, fontSize: 14, background: 'transparent', border: '1.5px solid rgba(255,255,255,0.15)', borderRadius: 99, padding: '12px 28px', cursor: 'pointer', color: '#F2E8D1' }}>
+              style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 14, background: 'transparent', border: '1.5px solid rgba(255,255,255,0.15)', borderRadius: 99, padding: '12px 28px', cursor: 'pointer', color: '#F2E8D1' }}>
               I keep getting rejected
             </button>
           </div>
@@ -146,16 +237,17 @@ export default function Landing() {
                 <p style={{ fontFamily: 'Inter', fontSize: 11, color: m.accent, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 14px' }}>{m.num}</p>
                 <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 17, margin: '0 0 10px', lineHeight: 1.2 }}>{m.label}</p>
                 <p style={{ fontFamily: 'Inter', fontSize: 13, margin: '0 0 20px', opacity: 0.75, lineHeight: 1.6 }}>{m.sub}</p>
-                <span style={{ fontFamily: 'Inter, sans-serif', fontStyle: 'italic', fontWeight: 700, fontSize: 13, color: m.accent }}>Start here →</span>
+                <span style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 13, color: m.accent }}>Start here →</span>
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* ── WHY MIRROVA ── */}
+      {/* ── WHY MIRROVA — CAROUSEL ── */}
       <div ref={whyRef} style={{ background: '#1A2118', padding: '80px 48px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+
           <div style={{ marginBottom: 52 }}>
             <p style={{ fontFamily: 'Inter', fontSize: 11, color: '#0F9E99', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>Why Mirrova</p>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
@@ -164,58 +256,72 @@ export default function Landing() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, marginBottom: 2 }}>
-            {[
-              { num: '01', title: 'Future Self Simulator', desc: "Chat with 3 AI versions of yourself, 5 years from now. Each has lived a different path. Ask them anything — in Tamil, Hindi, Telugu, Kannada, Bengali or English.", accent: '#0F9E99' },
-              { num: '02', title: 'Reality Check + Skills Gap', desc: "Get a brutally honest career readiness score based on your skills, city, college tier and target role. Know exactly where you stand — not where you hope to be.", accent: '#FBA002', dark: true },
-              { num: '03', title: 'Resume Intelligence', desc: "Upload your PDF or DOCX. Get an ATS score, 6-second recruiter impression, weak bullets rewritten with impact, and the exact skills you need to add.", accent: '#615091' },
-            ].map((f, i) => (
-              <div key={f.num} style={{ background: f.dark ? '#313B2F' : '#252E23', padding: '32px', border: '0.5px solid rgba(255,255,255,0.06)', borderRadius: i === 0 ? '12px 0 0 0' : i === 2 ? '0 12px 0 0' : 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
-                  <p style={{ fontFamily: 'Inter', fontSize: 11, color: '#4A4A4A', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0 }}>{f.num}</p>
-                  <div style={{ width: 32, height: 32, borderRadius: 8, background: `${f.accent}18`, border: `1px solid ${f.accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: f.accent }} />
+          {/* Carousel */}
+          <div style={{ position: 'relative', overflow: 'hidden' }}>
+
+            {/* Main card */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: 0,
+              borderRadius: 20,
+              overflow: 'hidden',
+              border: '1px solid rgba(255,255,255,0.06)',
+              opacity: animating ? 0 : 1,
+              transform: animating
+                ? `translateX(${direction === 'right' ? '-40px' : '40px'})`
+                : 'translateX(0)',
+              transition: 'opacity 0.3s ease, transform 0.3s ease',
+              minHeight: 320,
+            }}>
+              {/* Left — number and tag */}
+              <div style={{ background: `${tool.accent}12`, borderRight: `1px solid ${tool.accent}20`, padding: '48px 40px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={{ fontFamily: 'Inter', fontSize: 11, color: tool.accent, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 12px' }}>{tool.tag}</p>
+                  <span style={{ fontFamily: 'Fraunces, serif', fontWeight: 900, fontSize: 80, color: tool.accent, lineHeight: 1, opacity: 0.15 }}>{tool.num}</span>
+                </div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  {tools.map((_, i) => (
+                    <button key={i} onClick={() => goTo(i)}
+                      style={{ width: i === current ? 24 : 8, height: 8, borderRadius: 99, background: i === current ? tool.accent : 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', transition: 'all 0.3s', padding: 0 }} />
+                  ))}
+                </div>
+              </div>
+
+              {/* Right — content */}
+              <div style={{ background: '#252E23', padding: '48px 44px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 28, color: '#F2E8D1', margin: '0 0 16px', lineHeight: 1.2 }}>{tool.title}</p>
+                  <p style={{ fontFamily: 'Inter', fontSize: 15, color: '#B5A98A', margin: 0, lineHeight: 1.8 }}>{tool.desc}</p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 32 }}>
+                  <span style={{ fontFamily: 'Inter', fontSize: 12, color: '#4A4A4A', fontWeight: 600 }}>
+                    {current + 1} of {tools.length}
+                  </span>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={prev}
+                      style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', color: '#F2E8D1', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+                      onMouseEnter={e => e.currentTarget.style.background = `${tool.accent}20`}
+                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}>
+                      ←
+                    </button>
+                    <button onClick={next}
+                      style={{ width: 44, height: 44, borderRadius: '50%', background: tool.accent, border: 'none', cursor: 'pointer', color: '#fff', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+                      onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                      onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+                      →
+                    </button>
                   </div>
                 </div>
-                <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 18, color: '#F2E8D1', margin: '0 0 12px', lineHeight: 1.2 }}>{f.title}</p>
-                <p style={{ fontFamily: 'Inter', fontSize: 13, color: '#B5A98A', margin: 0, lineHeight: 1.75 }}>{f.desc}</p>
               </div>
-            ))}
+            </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2, marginBottom: 2 }}>
-            {[
-              { title: 'Career SWOT', desc: 'Strengths, weaknesses, opportunities and threats — with a full actionable report.', accent: '#0F9E99' },
-              { title: 'Rejection Decoder', desc: 'Find the REAL reason you were rejected — not the polite HR version.', accent: '#722F37' },
-              { title: '90-Day Spark Plan', desc: 'Week-by-week action plan built around your specific gaps and time available.', accent: '#FBA002' },
-              { title: 'Employability Passport', desc: 'A shareable career profile to send employers instead of a plain resume.', accent: '#615091' },
-            ].map((f, i) => (
-              <div key={f.title} style={{ background: '#1E2820', padding: '22px', border: '0.5px solid rgba(255,255,255,0.06)' }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: f.accent, marginBottom: 12 }} />
-                <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14, color: '#F2E8D1', margin: '0 0 8px', lineHeight: 1.3 }}>{f.title}</p>
-                <p style={{ fontFamily: 'Inter', fontSize: 12, color: '#B5A98A', margin: 0, lineHeight: 1.6 }}>{f.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, marginBottom: 2 }}>
-            {[
-              { title: 'Skills Assessment', desc: 'Rate yourself on key skills for your target role. See your gaps and what to learn first.', accent: '#0F9E99' },
-              { title: 'Pivot Bridge', desc: 'Already in the wrong course? Map your exact step-by-step path from where you are to where you want to be.', accent: '#D4A842' },
-              { title: 'Direction Finder', desc: "Don't know what you want? Answer 3 questions and Mirrova suggests 3 career paths that genuinely fit you.", accent: '#C3B9E8' },
-            ].map((f, i) => (
-              <div key={f.title} style={{ background: '#252E23', padding: '22px', border: '0.5px solid rgba(255,255,255,0.06)', borderRadius: i === 0 ? '0 0 0 12px' : i === 2 ? '0 0 12px 0' : 0 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: f.accent, marginBottom: 12 }} />
-                <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14, color: '#F2E8D1', margin: '0 0 8px', lineHeight: 1.3 }}>{f.title}</p>
-                <p style={{ fontFamily: 'Inter', fontSize: 12, color: '#B5A98A', margin: 0, lineHeight: 1.6 }}>{f.desc}</p>
-              </div>
-            ))}
-          </div>
-
+          {/* Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0, marginTop: 2, borderTop: '0.5px solid rgba(255,255,255,0.06)' }}>
             {[
               { val: '3', label: 'Ways to tell us your story — questions, voice or free text' },
-              { val: '11', label: 'Deep onboarding questions for fully personalized AI responses' },
+              { val: '12', label: 'Deep onboarding questions for fully personalized AI responses' },
               { val: '6', label: 'Indian languages — Tamil, Hindi, Telugu, Kannada, Bengali, English' },
             ].map((s, i) => (
               <div key={s.val} style={{ padding: '28px 32px', borderRight: i < 2 ? '0.5px solid rgba(255,255,255,0.06)' : 'none', display: 'flex', gap: 16, alignItems: 'center' }}>
@@ -240,7 +346,7 @@ export default function Landing() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {[
-              { num: '01', title: 'Tell Mirrova your story — your way', body: "Answer 11 deep questions, speak in your mother tongue, or just type everything freely like you're talking to someone you trust. Mirrova reads your story, understands you, and confirms what it heard before anything starts.", color: '#0F9E99', bg: '#fff' },
+              { num: '01', title: 'Tell Mirrova your story — your way', body: "Answer 12 deep questions, speak in your mother tongue, or just type everything freely like you're talking to someone you trust. Mirrova reads your story, understands you, and confirms what it heard before anything starts.", color: '#0F9E99', bg: '#fff' },
               { num: '02', title: 'Meet your future selves', body: 'AI generates 3 versions of you, 5 years from now. Each one has lived a different path. You chat with them in Tamil, Hindi or any of 6 languages. Ask the hard questions. See which one lights you up.', color: '#615091', bg: '#F5F0E8' },
               { num: '03', title: 'Get your complete career intelligence', body: 'Reality Check score. Skills gap analysis. Career SWOT. Resume ATS score. Rejection decoded. All of it personalized to your city, college tier, target role and hours available — not a generic template.', color: '#722F37', bg: '#fff' },
               { num: '04', title: 'Leave with a real plan', body: 'A 90-day Spark Plan built around your specific gaps — with weekly tasks, timelines, and reasons why. An Employability Passport to share with employers. And the clarity to take the next step today.', color: '#FBA002', bg: '#F5F0E8' },
@@ -277,11 +383,11 @@ export default function Landing() {
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button onClick={() => navigate('/signup')}
-              style={{ fontFamily: 'Inter, sans-serif', fontStyle: 'italic', fontWeight: 700, fontSize: 15, background: '#0F9E99', color: '#EFE9E0', border: 'none', borderRadius: 99, padding: '14px 40px', cursor: 'pointer' }}>
+              style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 15, background: '#0F9E99', color: '#EFE9E0', border: 'none', borderRadius: 99, padding: '14px 40px', cursor: 'pointer' }}>
               Start for free →
             </button>
             <button onClick={() => navigate('/login')}
-              style={{ fontFamily: 'Inter, sans-serif', fontStyle: 'italic', fontWeight: 700, fontSize: 15, background: 'transparent', border: '1.5px solid rgba(255,255,255,0.15)', borderRadius: 99, padding: '14px 40px', cursor: 'pointer', color: '#F2E8D1' }}>
+              style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 15, background: 'transparent', border: '1.5px solid rgba(255,255,255,0.15)', borderRadius: 99, padding: '14px 40px', cursor: 'pointer', color: '#F2E8D1' }}>
               Sign in
             </button>
           </div>
