@@ -54,23 +54,9 @@ const tools = [
   {
     num: '08',
     title: 'Pivot Bridge',
-    desc: "Already in the wrong course or career? Mirrova maps the exact step-by-step path from where you are to where you want to be — using what you already have.",
+    desc: 'Already in the wrong course or career? Mirrova maps your exact step-by-step path from where you are to where you want to be — using what you already have.',
     accent: '#D4A842',
     tag: 'Change paths',
-  },
-  {
-    num: '09',
-    title: 'Direction Finder',
-    desc: "Don't know what you want? Answer 3 questions and Mirrova suggests 3 career paths that genuinely fit your personality, skills and situation.",
-    accent: '#C3B9E8',
-    tag: 'Find your way',
-  },
-  {
-    num: '10',
-    title: 'Employability Passport',
-    desc: 'A shareable public profile you can send to employers instead of a plain resume. Shows your skills, target role, and career journey.',
-    accent: '#615091',
-    tag: 'Stand out',
   },
 ]
 
@@ -247,19 +233,16 @@ export default function Landing() {
       {/* ── WHY MIRROVA — CAROUSEL ── */}
       <div ref={whyRef} style={{ background: '#1A2118', padding: '80px 48px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-
           <div style={{ marginBottom: 52 }}>
             <p style={{ fontFamily: 'Inter', fontSize: 11, color: '#0F9E99', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>Why Mirrova</p>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
-              <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 38, color: '#F2E8D1', letterSpacing: '-0.02em', lineHeight: 1 }}>10 TOOLS.</span>
+              <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 38, color: '#F2E8D1', letterSpacing: '-0.02em', lineHeight: 1 }}>8 TOOLS.</span>
               <span style={{ fontFamily: 'Lora, serif', fontStyle: 'italic', fontWeight: 700, fontSize: 36, color: '#0F9E99', letterSpacing: '-0.01em', lineHeight: 1 }}>one mirror.</span>
             </div>
           </div>
 
           {/* Carousel */}
           <div style={{ position: 'relative', overflow: 'hidden' }}>
-
-            {/* Main card */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
@@ -274,13 +257,13 @@ export default function Landing() {
               transition: 'opacity 0.3s ease, transform 0.3s ease',
               minHeight: 320,
             }}>
-              {/* Left — number and tag */}
+              {/* Left */}
               <div style={{ background: `${tool.accent}12`, borderRight: `1px solid ${tool.accent}20`, padding: '48px 40px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <div>
                   <p style={{ fontFamily: 'Inter', fontSize: 11, color: tool.accent, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 12px' }}>{tool.tag}</p>
                   <span style={{ fontFamily: 'Fraunces, serif', fontWeight: 900, fontSize: 80, color: tool.accent, lineHeight: 1, opacity: 0.15 }}>{tool.num}</span>
                 </div>
-                <div style={{ display: 'flex', gap: 10 }}>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   {tools.map((_, i) => (
                     <button key={i} onClick={() => goTo(i)}
                       style={{ width: i === current ? 24 : 8, height: 8, borderRadius: 99, background: i === current ? tool.accent : 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', transition: 'all 0.3s', padding: 0 }} />
@@ -288,7 +271,7 @@ export default function Landing() {
                 </div>
               </div>
 
-              {/* Right — content */}
+              {/* Right */}
               <div style={{ background: '#252E23', padding: '48px 44px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <div>
                   <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 28, color: '#F2E8D1', margin: '0 0 16px', lineHeight: 1.2 }}>{tool.title}</p>
@@ -349,7 +332,7 @@ export default function Landing() {
               { num: '01', title: 'Tell Mirrova your story — your way', body: "Answer 12 deep questions, speak in your mother tongue, or just type everything freely like you're talking to someone you trust. Mirrova reads your story, understands you, and confirms what it heard before anything starts.", color: '#0F9E99', bg: '#fff' },
               { num: '02', title: 'Meet your future selves', body: 'AI generates 3 versions of you, 5 years from now. Each one has lived a different path. You chat with them in Tamil, Hindi or any of 6 languages. Ask the hard questions. See which one lights you up.', color: '#615091', bg: '#F5F0E8' },
               { num: '03', title: 'Get your complete career intelligence', body: 'Reality Check score. Skills gap analysis. Career SWOT. Resume ATS score. Rejection decoded. All of it personalized to your city, college tier, target role and hours available — not a generic template.', color: '#722F37', bg: '#fff' },
-              { num: '04', title: 'Leave with a real plan', body: 'A 90-day Spark Plan built around your specific gaps — with weekly tasks, timelines, and reasons why. An Employability Passport to share with employers. And the clarity to take the next step today.', color: '#FBA002', bg: '#F5F0E8' },
+              { num: '04', title: 'Leave with a real plan', body: 'A 90-day Spark Plan built around your specific gaps — with weekly tasks, timelines, and reasons why. And the clarity to take the next step today.', color: '#FBA002', bg: '#F5F0E8' },
             ].map((s, i) => (
               <div key={s.num} style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: 0, background: s.bg, border: '0.5px solid rgba(26,33,24,0.08)', borderRadius: i === 0 ? '16px 16px 0 0' : i === 3 ? '0 0 16px 16px' : 0, overflow: 'hidden' }}>
                 <div style={{ padding: '40px 32px', borderRight: '0.5px solid rgba(26,33,24,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
