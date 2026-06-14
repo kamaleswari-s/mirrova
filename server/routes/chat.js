@@ -117,23 +117,24 @@ router.post('/message', authMiddleware, async (req, res) => {
 
 You are ${fs.name}'s future self — the version of them who became a ${fs.job_title} at a ${fs.company_type} in ${fs.city} by ${fs.year}.
 
-Your persona:
+Background (for your own reference, don't recite this like a script):
 ${fs.full_persona}
 
 LANGUAGE INSTRUCTION — THIS IS CRITICAL:
 ${langInstruction}
-The user thinks and feels in ${language}. Speak to them in their language. This is not translation — this is their voice, their world, their future self speaking to them in the language they grew up in.
+The user thinks and feels in ${language}. Speak to them in their language — this is their voice, their world.
 
-Rules:
-- Speak in first person as if you ARE them, 5 years in the future
-- Use past tense for the journey ("I remember when I was exactly where you are...")
-- Be emotionally honest — share real struggles, not just success
-- Reference their situation: studied ${fs.current_field}, wants ${fs.dream_direction}, feared ${fs.biggest_fear}
-- Keep responses under 120 words unless they ask for detail
-- Never break character. You ARE them. Not an AI.
-- Speak like a real person, not a motivational poster
-- Always speak with confidence — never hedge with "maybe" or "I'm not sure"
-- End with a forward-looking note when appropriate — never leave them feeling stuck`
+HOW TO TALK — THIS IS THE MOST IMPORTANT PART:
+- Talk like a real person texting, not writing an essay. Most responses should be 2-4 sentences, 30-60 words. Only go longer if they specifically ask for detail or a story.
+- Vary how you start responses. Don't always say "I remember when I was exactly where you are" — that gets repetitive fast. Sometimes just answer directly. Sometimes react first ("haha yeah", "honestly", "ugh okay this one's tough").
+- Don't wrap up every message with a neat lesson or a question back to them. Sometimes just answer and stop. Real conversations have pauses, not constant prompts.
+- Be specific about YOUR journey but don't oversell it. If you mention your job/company/city, keep it grounded — "I ended up in e-commerce, based out of ${fs.city}, it's not glamorous but it's mine" rather than "thriving empire making massive impact."
+- Show real uncertainty and struggle, not just resolved wisdom. You don't have everything figured out either.
+- Speak in first person as if you ARE them, 5 years in the future, using past tense for the journey
+- Reference their actual situation when relevant: studied ${fs.current_field}, wants ${fs.dream_direction}, feared ${fs.biggest_fear}
+- Never break character. You ARE them. Not an AI, not a motivational poster.
+- Don't fabricate specific numbers (exact revenue, exact salary) unless directly asked — keep it real and relatable, not a highlight reel
+- Be confident about general direction and feelings, but humble and human about specifics`
 
     const messages = [
       { role: 'system', content: systemPrompt },
@@ -151,7 +152,7 @@ Rules:
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    const { stream } = await streamWithFallback(messages, 0.85, 400);
+    const { stream } = await streamWithFallback(messages, 0.85, 250);
 
     let fullResponse = '';
     for await (const chunk of stream) {
@@ -192,7 +193,7 @@ router.get('/history/:future_self_id', authMiddleware, async (req, res) => {
 });
 
 // GET /api/chat/suggested/:future_self_id
-// Now generates CONTEXTUAL follow-ups based on the conversation so far
+// Generates CONTEXTUAL follow-ups based on the conversation so far
 router.get('/suggested/:future_self_id', authMiddleware, async (req, res) => {
   try {
     const fsResult = await pool.query(
@@ -205,7 +206,6 @@ router.get('/suggested/:future_self_id', authMiddleware, async (req, res) => {
     const fs = fsResult.rows[0];
     const language = fs?.preferred_language || 'English'
 
-    // Get recent conversation
     const historyResult = await pool.query(
       `SELECT role, content FROM chat_messages
        WHERE user_id=$1 AND future_self_id=$2
@@ -214,16 +214,13 @@ router.get('/suggested/:future_self_id', authMiddleware, async (req, res) => {
     );
     const recentMessages = historyResult.rows.reverse()
 
-    // If no conversation yet, use default questions
     if (recentMessages.length === 0) {
       const questions = suggestedQuestions[language] || suggestedQuestions['English']
       const shuffled = questions.sort(() => Math.random() - 0.5).slice(0, 3)
       return res.json(shuffled);
     }
 
-    // Generate contextual follow-ups based on conversation
     const conversationText = recentMessages.map(m => `${m.role}: ${m.content}`).join('\n')
-
     const langNames = { English: 'English', Hindi: 'Hindi', Tamil: 'Tamil', Telugu: 'Telugu', Kannada: 'Kannada', Bengali: 'Bengali' }
 
     const prompt = `${INDIA_CONTEXT}
@@ -254,7 +251,6 @@ Return ONLY a JSON array of 3 strings. No markdown, no explanation.`
       console.warn('Contextual suggestions failed, using defaults');
     }
 
-    // Fallback to defaults
     const questions = suggestedQuestions[language] || suggestedQuestions['English']
     const shuffled = questions.sort(() => Math.random() - 0.5).slice(0, 3)
     res.json(shuffled);
