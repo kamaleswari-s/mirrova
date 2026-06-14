@@ -1,13 +1,12 @@
 const express = require('express');
-const Groq = require('groq-sdk');
 const pool = require('../db/pool');
 const authMiddleware = require('../middleware/auth');
+const { groqWithFallback } = require('../utils/groqWithFallback');
 
 const router = express.Router();
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const systemPrompts = {
-  English: `You are a brutally honest career forensics AI. You analyze rejection emails and experiences to find the REAL reason someone was rejected — not the polite HR reason, but the actual truth. You are direct, specific, and actionable. No fluff. No false comfort.`,
+  English: `You are a brutally honest career forensics AI for Indian students. You analyze rejection emails and experiences to find the REAL reason someone was rejected — not the polite HR reason, but the actual truth. You are direct, specific, and actionable. No fluff. No false comfort. Always end with a path forward — never leave the student feeling hopeless.`,
   Hindi: `आप एक बेहद ईमानदार career forensics AI हैं। आप rejection emails और अनुभवों का विश्लेषण करके असली कारण बताते हैं — HR का polite कारण नहीं, बल्कि असली सच्चाई।`,
   Tamil: `நீங்கள் ஒரு மிகவும் நேர்மையான career forensics AI. நீங்கள் rejection emails மற்றும் அனுபவங்களை பகுப்பாய்வு செய்து உண்மையான காரணத்தை கண்டுபிடிக்கிறீர்கள்.`,
   Telugu: `మీరు చాలా నిజాయితీగా ఉన్న career forensics AI. మీరు rejection emails మరియు అనుభవాలను విశ్లేషించి నిజమైన కారణాన్ని కనుగొంటారు.`,
@@ -63,14 +62,11 @@ Give a forensic breakdown in ${language}. Return a JSON object:
 
 Return ONLY valid JSON. No markdown.`
 
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: prompt }
-      ],
+    const completion = await groqWithFallback({
+      messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
-      max_tokens: 1500
+      max_tokens: 1500,
+      systemExtra: systemPrompt
     })
 
     let result
@@ -81,7 +77,6 @@ Return ONLY valid JSON. No markdown.`
       return res.status(500).json({ error: 'AI parse error' })
     }
 
-    // Save to DB
     await pool.query(
       `UPDATE profiles SET reality_check=COALESCE(reality_check, '{}'::jsonb) WHERE user_id=$1`,
       [req.user.id]
@@ -90,7 +85,7 @@ Return ONLY valid JSON. No markdown.`
     res.json(result)
   } catch (err) {
     console.error(err)
-    res.status(500).json({ error: 'Server error' })
+    res.status(500).json({ error: err.message || 'Server error' })
   }
 })
 
