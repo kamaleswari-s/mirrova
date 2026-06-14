@@ -2,9 +2,16 @@ const express = require('express');
 const Groq = require('groq-sdk');
 const pool = require('../db/pool');
 const authMiddleware = require('../middleware/auth');
+const { INDIA_CONTEXT } = require('../utils/groqWithFallback');
 
 const router = express.Router();
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+const STREAM_MODELS = [
+  'llama-3.3-70b-versatile',
+  'llama-3.1-70b-versatile',
+  'llama-3.1-8b-instant',
+];
 
 const languageInstructions = {
   'English': 'Respond in English only.',
@@ -66,6 +73,23 @@ const suggestedQuestions = {
   ]
 }
 
+// Streaming with fallback across models
+async function streamWithFallback(messages, temperature, max_tokens) {
+  for (const model of STREAM_MODELS) {
+    try {
+      const stream = await groq.chat.completions.create({
+        model, messages, temperature, max_tokens, stream: true
+      });
+      return { stream, model };
+    } catch (err) {
+      const isRateLimit = err?.status === 429 || err?.message?.includes('rate_limit') || err?.error?.code === 'rate_limit_exceeded';
+      if (isRateLimit) { console.warn(`Rate limit on ${model}, trying next...`); continue; }
+      throw err;
+    }
+  }
+  throw new Error('All models rate limited');
+}
+
 // POST /api/chat/message
 router.post('/message', authMiddleware, async (req, res) => {
   const { future_self_id, message, history = [] } = req.body;
@@ -89,7 +113,9 @@ router.post('/message', authMiddleware, async (req, res) => {
     const language = fs.preferred_language || 'English'
     const langInstruction = languageInstructions[language] || languageInstructions['English']
 
-    const systemPrompt = `You are ${fs.name}'s future self — the version of them who became a ${fs.job_title} at a ${fs.company_type} in ${fs.city} by ${fs.year}.
+    const systemPrompt = `${INDIA_CONTEXT}
+
+You are ${fs.name}'s future self — the version of them who became a ${fs.job_title} at a ${fs.company_type} in ${fs.city} by ${fs.year}.
 
 Your persona:
 ${fs.full_persona}
@@ -105,7 +131,9 @@ Rules:
 - Reference their situation: studied ${fs.current_field}, wants ${fs.dream_direction}, feared ${fs.biggest_fear}
 - Keep responses under 120 words unless they ask for detail
 - Never break character. You ARE them. Not an AI.
-- Speak like a real person, not a motivational poster`
+- Speak like a real person, not a motivational poster
+- Always speak with confidence — never hedge with "maybe" or "I'm not sure"
+- End with a forward-looking note when appropriate — never leave them feeling stuck`
 
     const messages = [
       { role: 'system', content: systemPrompt },
@@ -123,13 +151,7 @@ Rules:
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    const stream = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
-      messages,
-      temperature: 0.85,
-      max_tokens: 400,
-      stream: true
-    });
+    const { stream } = await streamWithFallback(messages, 0.85, 400);
 
     let fullResponse = '';
     for await (const chunk of stream) {
@@ -150,7 +172,7 @@ Rules:
 
   } catch (err) {
     console.error(err);
-    if (!res.headersSent) res.status(500).json({ error: 'Server error' });
+    if (!res.headersSent) res.status(500).json({ error: err.message || 'Server error' });
   }
 });
 
@@ -170,10 +192,11 @@ router.get('/history/:future_self_id', authMiddleware, async (req, res) => {
 });
 
 // GET /api/chat/suggested/:future_self_id
+// Now generates CONTEXTUAL follow-ups based on the conversation so far
 router.get('/suggested/:future_self_id', authMiddleware, async (req, res) => {
   try {
     const fsResult = await pool.query(
-      `SELECT fs.job_title, p.preferred_language
+      `SELECT fs.job_title, fs.full_persona, p.preferred_language, p.dream_direction, p.biggest_fear
        FROM future_selves fs
        JOIN profiles p ON p.user_id = fs.user_id
        WHERE fs.id=$1`,
@@ -181,10 +204,62 @@ router.get('/suggested/:future_self_id', authMiddleware, async (req, res) => {
     );
     const fs = fsResult.rows[0];
     const language = fs?.preferred_language || 'English'
+
+    // Get recent conversation
+    const historyResult = await pool.query(
+      `SELECT role, content FROM chat_messages
+       WHERE user_id=$1 AND future_self_id=$2
+       ORDER BY created_at DESC LIMIT 4`,
+      [req.user.id, req.params.future_self_id]
+    );
+    const recentMessages = historyResult.rows.reverse()
+
+    // If no conversation yet, use default questions
+    if (recentMessages.length === 0) {
+      const questions = suggestedQuestions[language] || suggestedQuestions['English']
+      const shuffled = questions.sort(() => Math.random() - 0.5).slice(0, 3)
+      return res.json(shuffled);
+    }
+
+    // Generate contextual follow-ups based on conversation
+    const conversationText = recentMessages.map(m => `${m.role}: ${m.content}`).join('\n')
+
+    const langNames = { English: 'English', Hindi: 'Hindi', Tamil: 'Tamil', Telugu: 'Telugu', Kannada: 'Kannada', Bengali: 'Bengali' }
+
+    const prompt = `${INDIA_CONTEXT}
+
+A student is chatting with their future self (a ${fs.job_title} in India). Here is the recent conversation:
+
+${conversationText}
+
+Generate exactly 3 short follow-up questions the student could ask next — questions that go DEEPER into what was just discussed, especially useful for a student who doesn't know what to ask. Each question should be under 12 words.
+
+Write the questions in ${langNames[language] || 'English'}.
+
+Return ONLY a JSON array of 3 strings. No markdown, no explanation.`
+
+    try {
+      const completion = await groq.chat.completions.create({
+        model: 'llama-3.1-8b-instant',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.8,
+        max_tokens: 300
+      });
+      const raw = completion.choices[0].message.content.trim();
+      const questions = JSON.parse(raw.replace(/```json|```/g, '').trim());
+      if (Array.isArray(questions) && questions.length > 0) {
+        return res.json(questions.slice(0, 3));
+      }
+    } catch (e) {
+      console.warn('Contextual suggestions failed, using defaults');
+    }
+
+    // Fallback to defaults
     const questions = suggestedQuestions[language] || suggestedQuestions['English']
     const shuffled = questions.sort(() => Math.random() - 0.5).slice(0, 3)
     res.json(shuffled);
   } catch (err) {
+    console.error(err)
     res.status(500).json({ error: 'Server error' });
   }
 });
