@@ -1,35 +1,9 @@
 const express = require('express');
-const Groq = require('groq-sdk');
 const pool = require('../db/pool');
 const authMiddleware = require('../middleware/auth');
+const { groqWithFallback } = require('../utils/groqWithFallback');
 
 const router = express.Router();
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-
-// Helper — generate real working resource links from search queries
-const generateResources = (task, targetRole) => {
-  const query = encodeURIComponent(`${task.title} ${targetRole}`)
-  const bookQuery = encodeURIComponent(`best book to learn ${task.title}`)
-  const certQuery = encodeURIComponent(`free certification ${task.title} coursera OR udemy OR google`)
-
-  return {
-    youtube: {
-      label: 'Watch on YouTube',
-      url: `https://www.youtube.com/results?search_query=${query}`,
-      icon: '▶️'
-    },
-    google: {
-      label: 'Find free courses',
-      url: `https://www.google.com/search?q=${certQuery}`,
-      icon: '🎓'
-    },
-    book: {
-      label: 'Find a book',
-      url: `https://www.google.com/search?q=${bookQuery}`,
-      icon: '📚'
-    }
-  }
-}
 
 // POST /api/sparkplan/generate
 router.post('/generate', authMiddleware, async (req, res) => {
@@ -95,6 +69,7 @@ IMPORTANT PERSONALIZATION RULES:
 - Month themes must reflect their actual journey
 - Each task must feel like it was written specifically for THIS student
 - For each task, provide a specific YouTube search query and a specific free resource search query that would help complete this task
+- Include a healthy mix of soft skill tasks (communication, teamwork, problem-solving, time management) alongside technical tasks — not just technical
 
 Return ONLY valid JSON:
 {
@@ -109,9 +84,10 @@ Return ONLY valid JSON:
       "description": "<exact action to take, personalized>",
       "duration": "<realistic time>",
       "why": "<one line: why this matters for becoming ${targetRole}>",
-      "youtube_query": "<specific 4-6 word YouTube search query to learn this skill e.g. 'python for data analysis beginners'>",
-      "resource_query": "<specific search query to find free course or certification e.g. 'free python certification google coursera'>",
-      "book_query": "<specific search query to find best book e.g. 'best book learn python data science'>",
+      "skill_type": "<technical OR soft skill>",
+      "youtube_query": "<specific 4-6 word YouTube search query>",
+      "resource_query": "<specific search query to find free course or certification>",
+      "book_query": "<specific search query to find best book>",
       "completed": false
     }
   ]
@@ -121,8 +97,7 @@ Generate exactly 27 tasks — 3 tasks per week, 9 weeks total.
 Make each task genuinely useful, specific, and progressive.
 Return ONLY the JSON. No markdown.`
 
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+    const completion = await groqWithFallback({
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.8,
       max_tokens: 4000
@@ -136,7 +111,6 @@ Return ONLY the JSON. No markdown.`
       return res.status(500).json({ error: 'Parse error' });
     }
 
-    // Add real working resource links to each task
     plan.tasks = plan.tasks.map(task => ({
       ...task,
       resources: {
@@ -170,7 +144,7 @@ Return ONLY the JSON. No markdown.`
     res.json(plan);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error', details: err.message });
+    res.status(500).json({ error: err.message || 'Server error' });
   }
 });
 
