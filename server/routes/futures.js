@@ -1,10 +1,9 @@
 const express = require('express');
-const Groq = require('groq-sdk');
 const pool = require('../db/pool');
 const authMiddleware = require('../middleware/auth');
+const { groqWithFallback } = require('../utils/groqWithFallback');
 
 const router = express.Router();
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const languageInstructions = {
   'English': 'Write everything in English.',
@@ -29,7 +28,7 @@ router.post('/generate', authMiddleware, async (req, res) => {
     const language = profile.preferred_language || 'English'
     const langInstruction = languageInstructions[language] || languageInstructions['English']
 
-    const prompt = `You are a career simulation AI. Based on this student's profile, generate exactly 3 distinct, realistic future career paths for them 5 years from now (year 2029).
+    const prompt = `You are a career simulation AI. Based on this student's profile, generate exactly 3 distinct, realistic future career paths for them 5 years from now (year 2031).
 
 Student Profile:
 - Name: ${profile.name}
@@ -43,22 +42,21 @@ Student Profile:
 LANGUAGE INSTRUCTION — CRITICAL:
 ${langInstruction}
 
-Generate 3 different future paths. Return a JSON array of 3 objects with these exact fields:
+Generate 3 different future paths grounded in real Indian companies, cities, and realistic salary ranges. Return a JSON array of 3 objects with these exact fields:
 - path_index: 0, 1, or 2
 - job_title: specific job title (always in English)
-- company_type: type of company (always in English)
-- city: city in India they live in (always in English)
-- salary_min: monthly salary in INR (number only)
-- salary_max: monthly salary in INR (number only)
-- year: 2029
-- intro_quote: a powerful 1-sentence quote this future self would say (first person, emotional) — write this in ${language}
-- full_persona: 200-word description of this future self's life, daily work, wins, regrets — write this in ${language}
+- company_type: type of company — reference real Indian company types or names where relevant (always in English)
+- city: a real Indian city (always in English)
+- salary_min: realistic monthly salary in INR for this role and city (number only)
+- salary_max: realistic monthly salary in INR for this role and city (number only)
+- year: 2031
+- intro_quote: a powerful 1-sentence quote this future self would say (first person, emotional, confident) — write this in ${language}
+- full_persona: 200-word description of this future self's life, daily work, wins, and one honest struggle they overcame — write this in ${language}
 - resonance_score: a number between 60-95 representing how much this path resonates with the student's stated dreams
 
 Return ONLY a valid JSON array. No markdown, no explanation. No extra text.`;
 
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+    const completion = await groqWithFallback({
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.8,
       max_tokens: 2500
@@ -83,7 +81,7 @@ Return ONLY a valid JSON array. No markdown, no explanation. No extra text.`;
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
          RETURNING *`,
         [req.user.id, f.path_index, f.job_title, f.company_type,
-         f.city, f.year || 2029, f.salary_min, f.salary_max,
+         f.city, f.year || 2031, f.salary_min, f.salary_max,
          f.intro_quote, f.full_persona, f.resonance_score || 75]
       );
       saved.push(result.rows[0]);
@@ -92,7 +90,7 @@ Return ONLY a valid JSON array. No markdown, no explanation. No extra text.`;
     res.json(saved);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error', details: err.message });
+    res.status(500).json({ error: err.message || 'Server error' });
   }
 });
 
