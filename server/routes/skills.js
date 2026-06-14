@@ -1,10 +1,9 @@
 const express = require('express');
-const Groq = require('groq-sdk');
 const pool = require('../db/pool');
 const authMiddleware = require('../middleware/auth');
+const { groqWithFallback } = require('../utils/groqWithFallback');
 
 const router = express.Router();
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // POST /api/skills/assess
 router.post('/assess', authMiddleware, async (req, res) => {
@@ -57,7 +56,13 @@ Student:
 - Top skill: ${profile.top_skill || 'not specified'}
 
 Generate exactly 12 skills that are most relevant for their transition from current field to dream direction.
-Mix of: technical skills, soft skills, industry knowledge, tools.
+
+IMPORTANT — CATEGORY BALANCE:
+Soft skills are EQUALLY important as technical skills for employability. Distribute the 12 skills roughly as:
+- 4-5 Technical skills
+- 3-4 Soft Skills (communication, teamwork, problem-solving, adaptability, time management, leadership)
+- 2 Tools
+- 2 Industry Knowledge
 
 Return a JSON array of 12 objects:
 [
@@ -70,8 +75,7 @@ Return a JSON array of 12 objects:
 
 Return ONLY valid JSON array. No markdown.`;
 
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+    const completion = await groqWithFallback({
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
       max_tokens: 1000
@@ -88,7 +92,7 @@ Return ONLY valid JSON array. No markdown.`;
     res.json(skills);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: err.message || 'Server error' });
   }
 });
 
@@ -104,7 +108,6 @@ router.post('/gap-analysis', authMiddleware, async (req, res) => {
     const profile = profileResult.rows[0];
     const language = profile?.preferred_language || 'English';
 
-    // Build skills summary
     const ratingLabels = ['', 'Never tried', 'Beginner', 'Familiar', 'Confident', 'Expert']
     const skillsSummary = skills.map(s => ({
       skill: s.skill,
@@ -126,10 +129,12 @@ Student:
 - Education: ${profile?.education_level || 'not specified'}
 
 Skills Assessment:
-${skillsSummary.map(s => `- ${s.skill} (${s.importance}): ${s.rating}`).join('\n')}
+${skillsSummary.map(s => `- ${s.skill} (${s.category}, ${s.importance}): ${s.rating}`).join('\n')}
 
 Critical skills rated low: ${criticalSkills.filter(s => (ratings[s.skill] || 0) <= 2).map(s => s.skill).join(', ') || 'none'}
 Strong skills: ${strongSkills.map(s => s.skill).join(', ') || 'none yet'}
+
+IMPORTANT: Treat soft skills gaps with the same seriousness as technical gaps. Employers value communication, teamwork, and adaptability as much as technical ability — make sure critical_gaps reflects this if soft skills were rated low.
 
 Generate a gap analysis in ${language}. Return JSON:
 {
@@ -137,9 +142,9 @@ Generate a gap analysis in ${language}. Return JSON:
   "readiness_label": "<Not Ready/Getting There/Almost Ready/Market Ready>",
   "summary": "<2 sentence honest summary in ${language}>",
   "critical_gaps": [
-    {"skill": "<skill>", "why_matters": "<why this is critical for their target role in ${language}>", "time_to_learn": "<realistic time>"},
-    {"skill": "<skill>", "why_matters": "<why>", "time_to_learn": "<time>"},
-    {"skill": "<skill>", "why_matters": "<why>", "time_to_learn": "<time>"}
+    {"skill": "<skill>", "category": "<Technical or Soft Skills or Tools or Industry Knowledge>", "why_matters": "<why this is critical for their target role in ${language}>", "time_to_learn": "<realistic time>"},
+    {"skill": "<skill>", "category": "<category>", "why_matters": "<why>", "time_to_learn": "<time>"},
+    {"skill": "<skill>", "category": "<category>", "why_matters": "<why>", "time_to_learn": "<time>"}
   ],
   "strengths": ["<strength skill 1>", "<strength skill 2>", "<strength skill 3>"],
   "learn_in_order": [
@@ -151,8 +156,7 @@ Generate a gap analysis in ${language}. Return JSON:
 
 Return ONLY valid JSON. No markdown.`
 
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+    const completion = await groqWithFallback({
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
       max_tokens: 1200
@@ -166,7 +170,6 @@ Return ONLY valid JSON. No markdown.`
       return res.status(500).json({ error: 'AI parse error' });
     }
 
-    // Save gap analysis to DB alongside skills assessment
     const existing = await pool.query(
       'SELECT skills_assessment FROM profiles WHERE user_id=$1', [req.user.id]
     );
@@ -182,7 +185,7 @@ Return ONLY valid JSON. No markdown.`
     res.json(result);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: err.message || 'Server error' });
   }
 });
 
