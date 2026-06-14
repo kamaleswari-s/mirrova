@@ -1,10 +1,9 @@
 const express = require('express');
-const Groq = require('groq-sdk');
 const pool = require('../db/pool');
 const authMiddleware = require('../middleware/auth');
+const { groqWithFallback } = require('../utils/groqWithFallback');
 
 const router = express.Router();
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // POST /api/swot/generate
 router.post('/generate', authMiddleware, async (req, res) => {
@@ -76,8 +75,7 @@ Generate a comprehensive Career SWOT Analysis in ${language}. Return a JSON obje
 
 Return ONLY valid JSON. No markdown. No explanation.`
 
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+    const completion = await groqWithFallback({
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
       max_tokens: 2500
@@ -91,7 +89,6 @@ Return ONLY valid JSON. No markdown. No explanation.`
       return res.status(500).json({ error: 'AI parse error' });
     }
 
-    // Save to DB
     await pool.query(
       'UPDATE profiles SET reality_check=COALESCE(reality_check, \'{}\'::jsonb) WHERE user_id=$1',
       [req.user.id]
@@ -100,7 +97,7 @@ Return ONLY valid JSON. No markdown. No explanation.`
     res.json(result);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: err.message || 'Server error' });
   }
 });
 
