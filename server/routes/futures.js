@@ -28,37 +28,65 @@ router.post('/generate', authMiddleware, async (req, res) => {
     const language = profile.preferred_language || 'English'
     const langInstruction = languageInstructions[language] || languageInstructions['English']
 
-    const prompt = `You are a career simulation AI. Based on this student's profile, generate exactly 3 distinct, realistic future career paths for them 5 years from now (year 2031).
+    // Pull free text story if available
+    const freeText = profile.free_text_story || profile.heart_dump || null
 
-Student Profile:
+    const prompt = `You are a career simulation AI. Based on this student's COMPLETE and SPECIFIC profile, generate exactly 3 distinct, realistic future career paths for them 5 years from now (year 2031).
+
+CRITICAL RULE — READ THIS FIRST:
+You must build these futures DIRECTLY from what this specific student has told you. Do NOT generate a generic Indian tech career template. Do NOT default to "started at Infosys" or "corporate ladder" unless the student explicitly said they want that. Every detail of the future self must be a logical, honest extension of THIS student's actual words, personality, fears, and aspirations.
+
+If the student says they hate corporate — their future self is NOT in corporate.
+If the student says they love building products — their future self is building something.
+If the student says they're good at communication — that shows up in their role.
+If the student has a non-traditional path — the future self reflects that, not a sanitized version.
+
+Student's COMPLETE Profile:
 - Name: ${profile.name}
-- Currently studying/working in: ${profile.current_field || 'not specified'}
+- Currently studying: ${profile.current_field || 'not specified'}
 - Dream direction: ${profile.dream_direction || 'not specified'}
 - Top skill: ${profile.top_skill || 'not specified'}
 - Biggest fear: ${profile.biggest_fear || 'not specified'}
-- Mode: ${profile.mode}
-- Preferred language: ${language}
+- Biggest blocker: ${profile.biggest_blocker || 'not specified'}
+- Success vision: ${profile.success_vision || 'not specified'}
+- Built anything before: ${profile.built_anything || 'not specified'}
+- City: ${profile.city || 'not specified'}
+- Education: ${profile.education_level || 'not specified'}
+- Hours available per day: ${profile.hours_per_day || 'not specified'}
+- Recent rejection: ${profile.recent_rejection || 'none'}
+- Mode they came in as: ${profile.mode || 'not specified'}
+${freeText ? `- In their own words (free text they wrote): "${freeText}"` : ''}
+
+GROUNDING RULES:
+- The 3 paths must represent genuinely different directions — not just the same path at different companies
+- One path should be the most aligned with what they explicitly said they want
+- One path should be a realistic adjacent pivot they haven't considered
+- One path should be the most ambitious version of their stated dream
+- All paths must feel earned — show the struggle, the small steps, the real journey — not an overnight success
+- Salary ranges must be realistic for their city and role in the Indian market in 2031
+- Company types must reflect the actual Indian ecosystem for their field
+- The full_persona must mention at least ONE specific thing from their profile — a fear they overcame, something they built, a skill they mentioned
 
 LANGUAGE INSTRUCTION — CRITICAL:
 ${langInstruction}
 
-Generate 3 different future paths grounded in real Indian companies, cities, and realistic salary ranges. Return a JSON array of 3 objects with these exact fields:
+Return a JSON array of 3 objects with these exact fields:
 - path_index: 0, 1, or 2
 - job_title: specific job title (always in English)
-- company_type: type of company — reference real Indian company types or names where relevant (always in English)
+- company_type: type of company (always in English)
 - city: a real Indian city (always in English)
-- salary_min: realistic monthly salary in INR for this role and city (number only)
-- salary_max: realistic monthly salary in INR for this role and city (number only)
+- salary_min: realistic monthly salary in INR (number only)
+- salary_max: realistic monthly salary in INR (number only)
 - year: 2031
-- intro_quote: a powerful 1-sentence quote this future self would say (first person, emotional, confident) — write this in ${language}
-- full_persona: 200-word description of this future self's life, daily work, wins, and one honest struggle they overcame — write this in ${language}
-- resonance_score: a number between 60-95 representing how much this path resonates with the student's stated dreams
+- intro_quote: a powerful 1-sentence quote this future self would say — raw, honest, specific to their journey, NOT generic inspiration (write in ${language})
+- full_persona: 200-word description of this future self's daily life, work, one real struggle they overcame, and one thing they wish they'd known — must feel like a REAL person, not a LinkedIn post (write in ${language})
+- resonance_score: 60-95, how much this path aligns with their stated dreams
 
-Return ONLY a valid JSON array. No markdown, no explanation. No extra text.`;
+Return ONLY a valid JSON array. No markdown, no explanation.`;
 
     const completion = await groqWithFallback({
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.8,
+      temperature: 0.85,
       max_tokens: 2500
     });
 
