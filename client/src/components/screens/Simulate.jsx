@@ -28,10 +28,10 @@ export default function Simulate() {
   const [suggestions, setSuggestions] = useState([])
   const [view, setView] = useState('cards')
   const [showTakeaways, setShowTakeaways] = useState(false)
+  const [showScaffold, setShowScaffold] = useState(true)
   const messagesEndRef = useRef(null)
 
   useEffect(() => { loadFutures() }, [])
-
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
@@ -57,7 +57,11 @@ export default function Simulate() {
     setSelected(future)
     setView('chat')
     setShowTakeaways(false)
-    setMessages([{ role: 'assistant', content: future.intro_quote + "\n\nI remember exactly where you are right now. Ask me anything — I've lived through it." }])
+    setShowScaffold(true)
+    setMessages([{
+      role: 'assistant',
+      content: `Hey. It's me — you, five years from now.\n\nI'm not here to give you a motivational speech. Ask me anything real. What's actually on your mind?`
+    }])
     try {
       const res = await axios.get(`/api/chat/suggested/${future.id}`)
       setSuggestions(res.data)
@@ -68,6 +72,7 @@ export default function Simulate() {
     const msg = text || input.trim()
     if (!msg || streaming) return
     setInput('')
+    setShowScaffold(false)
     const history = messages.map(m => ({ role: m.role, content: m.content }))
     setMessages(prev => [...prev, { role: 'user', content: msg }])
     setStreaming(true)
@@ -124,37 +129,49 @@ export default function Simulate() {
     } catch {}
   }
 
-  // Extract key takeaways from chat
   const getTakeaways = () => {
     const assistantMessages = messages.filter(m => m.role === 'assistant' && m.content.length > 50)
     if (assistantMessages.length < 2) return null
-
-    // Pull the most meaningful sentences from the conversation
     const allText = assistantMessages.map(m => m.content).join(' ')
     const sentences = allText.split(/[.!?]+/).filter(s => s.trim().length > 30)
-
-    // Pick 3 most impactful (heuristic: sentences with action words)
     const actionWords = ['must', 'should', 'start', 'stop', 'focus', 'build', 'learn', 'avoid', 'need', 'important', 'biggest', 'mistake', 'regret', 'wish', 'advice']
     const scored = sentences.map(s => ({
       text: s.trim(),
       score: actionWords.reduce((acc, w) => acc + (s.toLowerCase().includes(w) ? 1 : 0), 0)
     })).sort((a, b) => b.score - a.score)
-
     return scored.slice(0, 3).map(s => s.text).filter(s => s.length > 20)
   }
 
   const takeaways = getTakeaways()
   const hasEnoughMessages = messages.filter(m => m.role === 'user').length >= 2
 
+  const scaffoldQuestions = [
+    "Was it worth it? Be honest.",
+    "What do you wish you had started earlier?",
+    "What was your biggest mistake?",
+    "What does your typical day look like?",
+    "What would you tell me to do this week?",
+    "What's something nobody tells you about this path?"
+  ]
+
   // ── CARDS VIEW ──
   if (view === 'cards') return (
     <div style={{ padding: isMobile ? '20px 16px' : '40px 48px', color: colors.text }}>
-      <h1 className="page-heading" style={{ fontSize: isMobile ? 26 : 32, color: colors.text, marginBottom: 8 }}>
-        Future Self Simulator
-      </h1>
-      <p style={{ fontFamily: 'Inter', fontSize: isMobile ? 13 : 15, color: colors.textMuted, marginBottom: 32, fontWeight: 500 }}>
-        Meet 3 versions of yourself, 5 years from now. Ask them anything.
-      </p>
+      <div style={{ marginBottom: 28 }}>
+        <h1 className="page-heading" style={{ fontSize: isMobile ? 26 : 32, color: colors.text, marginBottom: 8 }}>
+          Future Self Simulator
+        </h1>
+        <p style={{ fontFamily: 'Inter', fontSize: isMobile ? 13 : 15, color: colors.textMuted, margin: 0, fontWeight: 500, lineHeight: 1.6 }}>
+          Meet 3 versions of yourself, 5 years from now. Each one lived a different path. Ask them anything.
+        </p>
+      </div>
+
+      {/* Disclaimer */}
+      <div style={{ background: 'rgba(15,158,153,0.06)', border: '1px solid rgba(15,158,153,0.15)', borderRadius: 12, padding: '12px 16px', marginBottom: 24 }}>
+        <p style={{ fontFamily: 'Inter', fontSize: 12, color: colors.textMuted, margin: 0, lineHeight: 1.6 }}>
+          🪞 These are <strong style={{ color: colors.text }}>possible futures</strong> — simulations based on your profile, not predictions. Use them as a thinking tool, not a guarantee.
+        </p>
+      </div>
 
       {futures.length === 0 ? (
         <div style={{ textAlign: 'center', padding: isMobile ? '40px 0' : '80px 0' }}>
@@ -171,31 +188,35 @@ export default function Simulate() {
         <>
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginBottom: 24 }}>
             {futures.map(f => (
-              <div key={f.id} style={{ background: colors.bgCard, borderRadius: 20, padding: isMobile ? '20px 16px' : '28px 24px', border: f.is_chosen ? `2px solid ${colors.btnPrimary}` : `1px solid ${colors.border}`, transition: 'transform 0.15s' }}
+              <div key={f.id} style={{ background: colors.bgCard, borderRadius: 20, padding: isMobile ? '20px 16px' : '28px 24px', border: f.is_chosen ? `2px solid ${colors.btnPrimary}` : `1px solid ${colors.border}`, transition: 'transform 0.15s', display: 'flex', flexDirection: 'column' }}
                 onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-              >
+                onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+
                 {f.is_chosen && (
-                  <span style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 11, background: colors.btnPrimary, color: colors.btnPrimaryText, padding: '3px 12px', borderRadius: 99, display: 'inline-block', marginBottom: 14 }}>✓ Chosen self</span>
+                  <span style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 11, background: colors.btnPrimary, color: colors.btnPrimaryText, padding: '3px 12px', borderRadius: 99, display: 'inline-block', marginBottom: 14, alignSelf: 'flex-start' }}>✓ Your north star</span>
                 )}
-                <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: isMobile ? 17 : 19, color: colors.btnPrimary, margin: '0 0 6px' }}>{f.job_title}</p>
-                <p style={{ fontFamily: 'Inter', fontSize: 13, color: colors.textMuted, margin: '0 0 4px', fontWeight: 500 }}>{f.company_type} · {f.city} · {f.year} <span style={{ fontSize: 11, opacity: 0.5 }}>· possible future</span></p>
-                <p style={{ fontFamily: 'Inter', fontSize: 13, color: colors.textMuted, margin: '0 0 18px', fontWeight: 500 }}>
+
+                <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: isMobile ? 17 : 20, color: colors.btnPrimary, margin: '0 0 6px', lineHeight: 1.2 }}>{f.job_title}</p>
+                <p style={{ fontFamily: 'Inter', fontSize: 12, color: colors.textMuted, margin: '0 0 4px', fontWeight: 500 }}>
+                  {f.company_type} · {f.city} · {f.year}
+                  <span style={{ fontSize: 10, opacity: 0.5 }}> · possible future</span>
+                </p>
+                <p style={{ fontFamily: 'Inter', fontSize: 13, color: colors.textMuted, margin: '0 0 16px', fontWeight: 600 }}>
                   ₹{Math.round(f.salary_min / 1000)}k – ₹{Math.round(f.salary_max / 1000)}k/month
                 </p>
-                <p style={{ fontFamily: 'Lora, serif', fontStyle: 'italic', fontSize: 13, color: colors.text, margin: '0 0 22px', lineHeight: 1.7, borderLeft: `3px solid ${colors.btnPrimary}`, paddingLeft: 14 }}>
+
+                <p style={{ fontFamily: 'Lora, serif', fontStyle: 'italic', fontSize: 13, color: colors.text, margin: '0 0 20px', lineHeight: 1.75, borderLeft: `3px solid ${colors.btnPrimary}`, paddingLeft: 14, flex: 1 }}>
                   "{f.intro_quote}"
                 </p>
 
-                {/* Resonance score */}
                 {f.resonance_score && (
-                  <div style={{ marginBottom: 16 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <span style={{ fontFamily: 'Inter', fontSize: 10, color: colors.textMuted, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Resonance</span>
+                  <div style={{ marginBottom: 18 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                      <span style={{ fontFamily: 'Inter', fontSize: 10, color: colors.textMuted, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Resonance with your goals</span>
                       <span style={{ fontFamily: 'Inter', fontSize: 10, color: colors.btnPrimary, fontWeight: 700 }}>{f.resonance_score}%</span>
                     </div>
                     <div style={{ height: 3, background: `${colors.btnPrimary}20`, borderRadius: 99 }}>
-                      <div style={{ height: 3, width: `${f.resonance_score}%`, background: colors.btnPrimary, borderRadius: 99 }} />
+                      <div style={{ height: 3, width: `${f.resonance_score}%`, background: colors.btnPrimary, borderRadius: 99, transition: 'width 0.8s ease' }} />
                     </div>
                   </div>
                 )}
@@ -203,7 +224,7 @@ export default function Simulate() {
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button onClick={() => startChat(f)}
                     style={{ flex: 1, fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 13, padding: '11px 0', background: colors.btnPrimary, color: colors.btnPrimaryText, border: 'none', borderRadius: 99, cursor: 'pointer' }}>
-                    Chat with this self
+                    Chat →
                   </button>
                   {!f.is_chosen && (
                     <button onClick={() => chooseSelf(f)}
@@ -215,9 +236,10 @@ export default function Simulate() {
               </div>
             ))}
           </div>
+
           <button onClick={generateFutures} disabled={generating}
             style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 13, background: 'transparent', color: colors.textMuted, border: `1px solid ${colors.border}`, borderRadius: 99, padding: '10px 24px', cursor: 'pointer' }}>
-            {generating ? 'Regenerating...' : 'Regenerate futures →'}
+            {generating ? 'Regenerating...' : '↺ Regenerate futures'}
           </button>
         </>
       )}
@@ -237,17 +259,17 @@ export default function Simulate() {
         <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#0F9E99', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Fraunces', fontWeight: 900, fontSize: 13, color: '#EFE9E0', flexShrink: 0 }}>FS</div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: isMobile ? 13 : 15, color: '#F2E8D1', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selected?.job_title}</p>
-          {!isMobile && <p style={{ fontFamily: 'Inter', fontSize: 12, color: '#B5A98A', margin: 0, fontWeight: 500 }}>{selected?.company_type} · {selected?.city} · {selected?.year}</p>}
+          <p style={{ fontFamily: 'Inter', fontSize: 11, color: '#B5A98A', margin: 0, fontWeight: 500 }}>{selected?.city} · {selected?.year} · possible future</p>
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
           {hasEnoughMessages && takeaways && (
             <button onClick={() => setShowTakeaways(!showTakeaways)}
-              style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: isMobile ? 11 : 13, background: showTakeaways ? '#615091' : 'rgba(97,80,145,0.2)', color: '#C3B9E8', border: '1px solid rgba(97,80,145,0.4)', borderRadius: 99, padding: isMobile ? '7px 12px' : '9px 18px', cursor: 'pointer' }}>
-              {showTakeaways ? 'Hide insights' : '✨ Key insights'}
+              style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: isMobile ? 11 : 12, background: showTakeaways ? '#615091' : 'rgba(97,80,145,0.2)', color: '#C3B9E8', border: '1px solid rgba(97,80,145,0.4)', borderRadius: 99, padding: isMobile ? '7px 12px' : '8px 16px', cursor: 'pointer' }}>
+              ✨ Insights
             </button>
           )}
           <button onClick={() => chooseSelf(selected)}
-            style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: isMobile ? 11 : 13, background: '#FBA002', color: '#1A2118', border: 'none', borderRadius: 99, padding: isMobile ? '7px 14px' : '9px 20px', cursor: 'pointer' }}>
+            style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: isMobile ? 11 : 12, background: selected?.is_chosen ? 'rgba(15,158,153,0.2)' : '#FBA002', color: selected?.is_chosen ? '#0F9E99' : '#1A2118', border: selected?.is_chosen ? '1px solid #0F9E99' : 'none', borderRadius: 99, padding: isMobile ? '7px 14px' : '8px 18px', cursor: 'pointer' }}>
             {selected?.is_chosen ? '✓ Chosen' : 'Lock in'}
           </button>
         </div>
@@ -270,17 +292,17 @@ export default function Simulate() {
             ))}
           </div>
           <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
-            <a href={`https://www.google.com/search?q=how+to+become+${encodeURIComponent(selected?.job_title || 'my target role')}`}
+            <a href={`https://www.google.com/search?q=how+to+become+${encodeURIComponent(selected?.job_title || 'my target role')}+in+India`}
               target="_blank" rel="noopener noreferrer"
               style={{ fontFamily: 'Inter', fontSize: 11, color: '#C3B9E8', fontWeight: 600, background: 'rgba(97,80,145,0.2)', padding: '4px 12px', borderRadius: 99, border: '1px solid rgba(97,80,145,0.3)', textDecoration: 'none' }}>
               🔗 Research this path
             </a>
-            <a href={`https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(selected?.job_title || '')}`}
+            <a href={`https://www.naukri.com/${encodeURIComponent((selected?.job_title || '').toLowerCase().replace(/ /g, '-'))}-jobs`}
               target="_blank" rel="noopener noreferrer"
               style={{ fontFamily: 'Inter', fontSize: 11, color: '#C3B9E8', fontWeight: 600, background: 'rgba(97,80,145,0.2)', padding: '4px 12px', borderRadius: 99, border: '1px solid rgba(97,80,145,0.3)', textDecoration: 'none' }}>
-              💼 See LinkedIn jobs
+              💼 Jobs on Naukri
             </a>
-            <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent('day in the life ' + (selected?.job_title || ''))}`}
+            <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent('day in the life ' + (selected?.job_title || '') + ' India')}`}
               target="_blank" rel="noopener noreferrer"
               style={{ fontFamily: 'Inter', fontSize: 11, color: '#C3B9E8', fontWeight: 600, background: 'rgba(97,80,145,0.2)', padding: '4px 12px', borderRadius: 99, border: '1px solid rgba(97,80,145,0.3)', textDecoration: 'none' }}>
               ▶️ Day in the life
@@ -291,6 +313,7 @@ export default function Simulate() {
 
       {/* Messages */}
       <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '16px' : '28px 32px', background: '#1A2118', display: 'flex', flexDirection: 'column', gap: 16 }}>
+
         {messages.map((m, i) => (
           <div key={i} style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start', gap: 10, alignItems: 'flex-end' }}>
             {m.role === 'assistant' && (
@@ -305,12 +328,29 @@ export default function Simulate() {
               fontFamily: 'Inter', fontSize: isMobile ? 13 : 14, lineHeight: 1.7, whiteSpace: 'pre-wrap', fontWeight: 400
             }}>
               {m.content || (m.streaming && <TypingIndicator />)}
-              {m.streaming && m.content && <span className="cursor-blink" />}
             </div>
           </div>
         ))}
 
-        {/* Show insights nudge after enough messages */}
+        {/* Scaffolding — shown after opening message, before first user message */}
+        {showScaffold && messages.length === 1 && (
+          <div style={{ padding: '4px 40px' }}>
+            <p style={{ fontFamily: 'Inter', fontSize: 11, color: '#4A4A4A', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>
+              Not sure what to ask? Try one of these:
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {scaffoldQuestions.map((q, i) => (
+                <button key={i} onClick={() => sendMessage(q)}
+                  style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 600, fontSize: 13, background: 'rgba(255,255,255,0.04)', color: '#B5A98A', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '10px 16px', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(15,158,153,0.08)'; e.currentTarget.style.color = '#0F9E99'; e.currentTarget.style.borderColor = 'rgba(15,158,153,0.2)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = '#B5A98A'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}>
+                  {q}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {hasEnoughMessages && takeaways && !showTakeaways && (
           <div style={{ textAlign: 'center', padding: '8px 0' }}>
             <button onClick={() => setShowTakeaways(true)}
@@ -324,7 +364,7 @@ export default function Simulate() {
       </div>
 
       {/* Suggestions */}
-      {suggestions.length > 0 && !streaming && (
+      {suggestions.length > 0 && !streaming && !showScaffold && (
         <div style={{ background: '#252E23', padding: isMobile ? '10px 16px' : '12px 32px', display: 'flex', gap: 8, flexWrap: 'wrap', borderTop: '0.5px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
           {suggestions.map((s, i) => (
             <button key={i} onClick={() => sendMessage(s)}
@@ -346,7 +386,7 @@ export default function Simulate() {
           style={{ flex: 1, height: 44, borderRadius: 99, border: '1px solid rgba(255,255,255,0.1)', padding: '0 18px', fontSize: isMobile ? 13 : 14, fontFamily: 'Inter', background: '#313B2F', color: '#F2E8D1', outline: 'none' }}
         />
         <button onClick={() => sendMessage()} disabled={streaming || !input.trim()}
-          style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 14, background: '#FBA002', color: '#1A2118', border: 'none', borderRadius: 99, padding: '0 20px', cursor: 'pointer', opacity: streaming ? 0.5 : 1 }}>
+          style={{ fontFamily: 'Inter', fontStyle: 'italic', fontWeight: 700, fontSize: 14, background: '#FBA002', color: '#1A2118', border: 'none', borderRadius: 99, padding: '0 20px', cursor: 'pointer', opacity: streaming || !input.trim() ? 0.5 : 1 }}>
           Send
         </button>
       </div>
